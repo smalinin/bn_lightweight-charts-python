@@ -51,6 +51,18 @@ export const setCursor = (type: string | undefined) => {
 }
 
 
+export function htmlToElement(html:string): HTMLElement {
+    let template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    const el = template.content.firstChild;
+    if (!el) throw new Error("Invalid HTML passed to htmlToElement");
+    return el as HTMLElement;
+}
+
+
+
+
 // export interface SeriesHandler {
 //     type: string;
 //     series: ISeriesApi<SeriesType>;

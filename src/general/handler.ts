@@ -7,13 +7,18 @@ import {
     ISeriesApi,
     LineStyleOptions,
     LogicalRange,
-    LogicalRangeChangeEventHandler,
-    MouseEventHandler,
+//??    LogicalRangeChangeEventHandler,
+//??    MouseEventHandler,
     MouseEventParams,
     SeriesOptionsCommon,
     SeriesType,
     Time,
-    createChart
+    createChart,
+    CandlestickSeries,
+    HistogramSeries,
+    LineSeries,
+    createTextWatermark,
+    createSeriesMarkers,
 } from "lightweight-charts";
 
 import { GlobalParams, globalParamInit } from "./global-params";
@@ -22,9 +27,9 @@ import { ToolBox } from "./toolbox";
 import { TopBar } from "./topbar";
 
 
-export interface Scale{
-    width: number,
-    height: number,
+export interface Scale {
+    width: number;
+    height: number;
 }
 
 
@@ -51,6 +56,8 @@ export class Handler {
     public spinner: HTMLDivElement | undefined;
 
     public _seriesList: ISeriesApi<SeriesType>[] = [];
+    public watermark: any;
+    public seriesMarkers: any;
 
     // TODO find a better solution rather than the 'position' parameter
     constructor(
@@ -58,7 +65,8 @@ export class Handler {
         innerWidth: number,
         innerHeight: number,
         position: string,
-        autoSize: boolean
+        autoSize: boolean,
+        paneIndex: number = 0
     ) {
         this.reSize = this.reSize.bind(this)
 
@@ -79,8 +87,9 @@ export class Handler {
         window.containerDiv.append(this.wrapper)
         
         this.chart = this._createChart();
-        this.series = this.createCandlestickSeries();
-        this.volumeSeries = this.createVolumeSeries();
+        this.series = this.createCandlestickSeries(paneIndex);
+        this.volumeSeries = this.createVolumeSeries(paneIndex);
+        this.seriesMarkers = createSeriesMarkers(this.series, []);
 
         this.legend = new Legend(this)
         
@@ -99,11 +108,19 @@ export class Handler {
 
 
     reSize() {
-        let topBarOffset = this.scale.height !== 0 ? this._topBar?._div.offsetHeight || 0 : 0
-        this.chart.resize(window.innerWidth * this.scale.width, (window.innerHeight * this.scale.height) - topBarOffset)
-        this.wrapper.style.width = `${100 * this.scale.width}%`
-        this.wrapper.style.height = `${100 * this.scale.height}%`
-        
+      let topBarOffset = this.scale.height !== 0 ? this._topBar?._div.offsetHeight || 0 : 0
+      if (this.scale.height >= 0) {
+          this.chart.resize(window.innerWidth * this.scale.width, (window.innerHeight * this.scale.height) - topBarOffset)
+          this.wrapper.style.width = `${100 * this.scale.width}%`
+          this.wrapper.style.height = `${100 * this.scale.height}%`
+      }
+      else {
+          var chart_height: number = Math.ceil(Math.abs(this.scale.height));
+          this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, chart_height - topBarOffset)
+          this.wrapper.style.width = `${100 * this.scale.width}%`
+          this.wrapper.style.height = `${chart_height}px`
+      }
+      
         // TODO definitely a better way to do this
         if (this.scale.height === 0 || this.scale.width === 0) {
             // if (this.legend.div.style.display == 'flex') this.legend.div.style.display = 'none'
@@ -121,80 +138,101 @@ export class Handler {
 
     private _createChart() {
         return createChart(this.div, {
-            width: window.innerWidth * this.scale.width,
-            height: window.innerHeight * this.scale.height,
-            layout:{
-                textColor: window.pane.color,
-                background: {
-                    color: '#000000',
-                    type: ColorType.Solid,
-                },
-                fontSize: 12
-            },
-            rightPriceScale: {
-                scaleMargins: {top: 0.3, bottom: 0.25},
-            },
-            timeScale: {timeVisible: true, secondsVisible: false},
-            crosshair: {
-                mode: CrosshairMode.Normal,
-                vertLine: {
-                    labelBackgroundColor: 'rgb(46, 46, 46)'
-                },
-                horzLine: {
-                    labelBackgroundColor: 'rgb(55, 55, 55)'
-                }
-            },
-            grid: {
-                vertLines: {color: 'rgba(29, 30, 38, 5)'},
-                horzLines: {color: 'rgba(29, 30, 58, 5)'},
-            },
-            handleScroll: {vertTouchDrag: true},
-        })
-    }
+      //width: window.innerWidth * this.scale.width,
+      //height: this.scale.height<0 ? Math.ceil(Math.abs(this.scale.height)) : window.innerHeight * this.scale.height,
+      width: window.containerDiv.offsetWidth * this.scale.width,
+      height: this.scale.height<0 ? Math.ceil(Math.abs(this.scale.height)) : window.innerHeight * this.scale.height,
+      layout: {
+        textColor: window.pane.color,
+        background: {
+          color: '#000000',
+          type: ColorType.Solid,
+        },
+        fontSize: 12,
+        panes: {
+          separatorColor: 'lightgrey',//'#f22c3d',
+          separatorHoverColor: "rgba(255, 0, 0, 0.4)",
+          enableResize: true,
+        },
+      },
+      rightPriceScale: {
+        scaleMargins: { top: 0.3, bottom: 0.25 },
+      },
+      timeScale: { timeVisible: true, secondsVisible: false },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          labelBackgroundColor: 'rgb(46, 46, 46)',
+        },
+        horzLine: {
+          labelBackgroundColor: 'rgb(55, 55, 55)',
+        },
+      },
+      grid: {
+        vertLines: { color: 'rgba(29, 30, 38, 5)' },
+        horzLines: { color: 'rgba(29, 30, 58, 5)' },
+      },
+      handleScroll: { vertTouchDrag: true },
+    });
+  }
 
-    createCandlestickSeries() {
+    createCandlestickSeries(paneIndex?: number) {
         const up = 'rgba(39, 157, 130, 100)'
         const down = 'rgba(200, 97, 100, 100)'
-        const candleSeries = this.chart.addCandlestickSeries({
-            upColor: up, borderUpColor: up, wickUpColor: up,
-            downColor: down, borderDownColor: down, wickDownColor: down
-        });
+        const candleSeries = this.chart.addSeries(
+            CandlestickSeries, {
+                upColor: up, borderUpColor: up, wickUpColor: up,
+                downColor: down, borderDownColor: down, wickDownColor: down
+            },
+            paneIndex
+        );
         candleSeries.priceScale().applyOptions({
             scaleMargins: {top: 0.2, bottom: 0.2},
         });
         return candleSeries;
     }
 
-    createVolumeSeries() {
-        const volumeSeries = this.chart.addHistogramSeries({
-            color: '#26a69a',
-            priceFormat: {type: 'volume'},
-            priceScaleId: 'volume_scale',
-        })
+    createVolumeSeries(paneIndex?: number) {
+        const volumeSeries = this.chart.addSeries(
+            HistogramSeries,
+            {
+                color: '#26a69a',
+                priceFormat: {type: 'volume'},
+                priceScaleId: 'volume_scale',
+            },
+            paneIndex
+        );
         volumeSeries.priceScale().applyOptions({
             scaleMargins: {top: 0.8, bottom: 0},
         });
         return volumeSeries;
     }
 
-    createLineSeries(name: string, options: DeepPartial<LineStyleOptions & SeriesOptionsCommon>) {
-        const line = this.chart.addLineSeries({...options});
+    createLineSeries(name: string, options: DeepPartial<LineStyleOptions & SeriesOptionsCommon>, paneIndex: number = 0)
+    {
+        const line = this.chart.addSeries(LineSeries, {...options}, paneIndex);
         this._seriesList.push(line);
-        this.legend.makeSeriesRow(name, line)
+        this.legend.makeSeriesRow(name, line, paneIndex)
+
         return {
             name: name,
             series: line,
         }
     }
 
-    createHistogramSeries(name: string, options: DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>) {
-        const line = this.chart.addHistogramSeries({...options});
+    createHistogramSeries(name: string, options: DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>, paneIndex: number = 0)
+    {
+        const line = this.chart.addSeries(
+            HistogramSeries,
+            { ...options },
+            paneIndex
+        );
         this._seriesList.push(line);
-        this.legend.makeSeriesRow(name, line)
+        this.legend.makeSeriesRow(name, line, paneIndex);
         return {
             name: name,
             series: line,
-        }
+        };
     }
 
     createToolBox() {
@@ -214,6 +252,42 @@ export class Handler {
         return serialized;
     }
 
+    public static syncChartsAll(handlers:Handler[], crosshairOnly = false) {
+      // 1) Crosshair
+      handlers.forEach((source) => {
+          source.chart.subscribeCrosshairMove((param) => {
+              handlers.forEach((target) => {
+                  if (target === source) return;
+                  if (!param.time) {
+                      target.chart.clearCrosshairPosition();
+                      return;
+                  }
+                  // get the point from the source series (for legend update)
+                  const point = param.seriesData.get(source.series) || null;
+                  // set the crosshair on the target chart
+                  target.chart.setCrosshairPosition(0, param.time, target.series);
+                  // update the legend on the target
+                  if (point) {
+                      target.legend.legendHandler(point as MouseEventParams<Time>, true);
+                  }
+              });
+          });
+      });
+
+      if (crosshairOnly) return;
+
+      // 2) Visible range synchronization
+      handlers.forEach((source) => {
+          source.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+              handlers.forEach((target) => {
+                  if (target === source || !range) return;
+                  target.chart.timeScale().setVisibleLogicalRange(range);
+              });
+          });
+      });
+    }
+
+/**    
     public static syncCharts(childChart:Handler, parentChart: Handler, crosshairOnly = false) {
         function crosshairHandler(chart: Handler, point: any) {//point: BarData | LineData) {
             if (!point) {
@@ -291,6 +365,49 @@ export class Handler {
         if (crosshairOnly) return;
         parentChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setChildRange)
     }
+**/
+  public static syncCharts(childChart:Handler, parentChart: Handler, crosshairOnly = false) {
+      function crosshairHandler(chart: Handler, point: any, param: any) {
+          if (!param.time) {
+              chart.chart.clearCrosshairPosition();
+              return;
+          }
+          chart.chart.setCrosshairPosition(0, param.time, chart.series);
+          if (point)
+              chart.legend.legendHandler(point, true);
+      }
+
+      function getPoint(series: ISeriesApi<SeriesType>, param: MouseEventParams) {
+          if (!param.time) return null;
+          return param.seriesData.get(series) || null;
+      }
+
+      const childTimeScale = childChart.chart.timeScale();
+      const parentTimeScale = parentChart.chart.timeScale();
+
+      const setChildRange = (timeRange: LogicalRange | null) => {
+          if(timeRange) childTimeScale.setVisibleLogicalRange(timeRange);
+      }
+      const setParentRange = (timeRange: LogicalRange | null) => {
+          if(timeRange) parentTimeScale.setVisibleLogicalRange(timeRange);
+      }
+
+      const setParentCrosshair = (param: MouseEventParams) => {
+          crosshairHandler(parentChart, getPoint(childChart.series, param), param)
+      }
+      const setChildCrosshair = (param: MouseEventParams) => {
+          crosshairHandler(childChart, getPoint(parentChart.series, param), param)
+      }
+
+      parentChart.chart.subscribeCrosshairMove(setChildCrosshair);
+      childChart.chart.subscribeCrosshairMove(setParentCrosshair);
+
+      if (crosshairOnly)
+          return
+
+      childChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setParentRange);
+      parentChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setChildRange);
+  }
 
     public static makeSearchBox(chart: Handler) {
         const searchWindow = document.createElement('div')
@@ -308,7 +425,8 @@ export class Handler {
         chart.div.appendChild(searchWindow);
 
         chart.commandFunctions.push((event: KeyboardEvent) => {
-            if (window.handlerInFocus !== chart.id || window.textBoxFocused) return false
+            if (window.handlerInFocus !== chart.id || window.textBoxFocused)
+                return false
             if (searchWindow.style.display === 'none') {
                 if (/^[a-zA-Z0-9]$/.test(event.key)) {
                     searchWindow.style.display = 'flex';
@@ -318,7 +436,8 @@ export class Handler {
                 else return false
             }
             else if (event.key === 'Enter' || event.key === 'Escape') {
-                if (event.key === 'Enter') window.callbackFunction(`search${chart.id}_~_${sBox.value}`)
+                if (event.key === 'Enter')
+                    window.callbackFunction(`search${chart.id}_~_${sBox.value}`)
                 searchWindow.style.display = 'none'
                 sBox.value = ''
                 return true
@@ -365,4 +484,28 @@ export class Handler {
             rootStyle.setProperty(property, styles[valueKey]);
         }
     }
+
+  createWatermark(text: string, fontSize: number, color: string) {
+    if (!this.watermark) {
+      this.watermark = createTextWatermark(this.chart.panes()[0], {
+        horzAlign: 'center',
+        vertAlign: 'center',
+        lines: [{
+          text: text,
+          color: color,
+          fontSize: fontSize,
+        }],
+      });
+
+      return;
+    }
+
+    this.watermark.applyOptions({
+      lines: [{
+        text: text,
+        color: color,
+        fontSize: fontSize,
+      }]
+    });
+  }
 }

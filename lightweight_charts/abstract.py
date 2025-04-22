@@ -107,22 +107,18 @@ class Window:
         toolbox: bool = False
     ) -> 'AbstractChart':
         subchart = AbstractChart(
-            self,
-            width,
-            height,
-            scale_candles_only,
-            toolbox,
-            position=position
+            self, width, height, scale_candles_only, toolbox, position=position
         )
         if not sync_id:
             return subchart
-        self.run_script(f'''
-            Lib.Handler.syncCharts(
-                {subchart.id},
-                {sync_id},
-                {jbool(sync_crosshairs_only)}
-            )
-        ''', run_last=True)
+        # self.run_script(f'''
+        #     Lib.Handler.syncCharts(
+        #         {subchart.id},
+        #         {sync_id},
+        #         {jbool(sync_crosshairs_only)}
+        #     )
+        # ''', run_last=True
+        # )
         return subchart
 
     def style(
@@ -140,7 +136,7 @@ class Window:
 
 
 class SeriesCommon(Pane):
-    def __init__(self, chart: 'AbstractChart', name: str = ''):
+    def __init__(self, chart: 'AbstractChart', name: str = '', pane_index: int = 0):
         super().__init__(chart.win)
         self._chart = chart
         if hasattr(chart, '_interval'):
@@ -153,6 +149,7 @@ class SeriesCommon(Pane):
         self.offset = 0
         self.data = pd.DataFrame()
         self.markers = {}
+        self.pane_index = pane_index
 
     def _set_interval(self, df: pd.DataFrame):
         if not pd.api.types.is_datetime64_any_dtype(df['time']):
@@ -183,6 +180,7 @@ class SeriesCommon(Pane):
     def _format_labels(data, labels, index, exclude_lowercase):
         def rename(la, mapper):
             return [mapper[key] if key in mapper else key for key in la]
+
         if 'date' not in labels and 'time' not in labels:
             labels = labels.str.lower()
             if exclude_lowercase:
@@ -200,7 +198,7 @@ class SeriesCommon(Pane):
         self._set_interval(df)
         if not pd.api.types.is_datetime64_any_dtype(df['time']):
             df['time'] = pd.to_datetime(df['time'])
-        df['time'] = df['time'].astype('int64') // 10 ** 9
+        df['time'] = df['time'].astype('int64') // 10**9
         return df
 
     def _series_datetime_format(self, series: pd.Series, exclude_lowercase=None):
@@ -244,7 +242,7 @@ class SeriesCommon(Pane):
         self.run_script(f'{self.id}.series.update({js_data(series)})')
 
     def _update_markers(self):
-        self.run_script(f'{self.id}.series.setMarkers({json.dumps(list(self.markers.values()))})')
+        self.run_script(f'{self.id}.seriesMarkers.setMarkers({json.dumps(list(self.markers.values()))})')
 
     def marker_list(self, markers: list):
         """
@@ -291,7 +289,7 @@ class SeriesCommon(Pane):
         marker_id = self.win._id_gen.generate()
 
         self.markers[marker_id] = {
-            "time": formatted_time,
+            "time": int(formatted_time),
             "position": marker_position(position),
             "color": color,
             "shape": marker_shape(shape),
@@ -424,9 +422,11 @@ class SeriesCommon(Pane):
 
 
 class Line(SeriesCommon):
-    def __init__(self, chart, name, color, style, width, price_line, price_label, price_scale_id=None, crosshair_marker=True):
+    def __init__(self, chart, name, color, style, width, price_line, price_label, price_scale_id=None,
+                 crosshair_marker=True, pane_index: int = 0,
+    ):
 
-        super().__init__(chart, name)
+        super().__init__(chart, name, pane_index)
         self.color = color
 
         self.run_script(f'''
@@ -439,7 +439,7 @@ class Line(SeriesCommon):
                     lastValueVisible: {jbool(price_label)},
                     priceLineVisible: {jbool(price_line)},
                     crosshairMarkerVisible: {jbool(crosshair_marker)},
-                    priceScaleId: {f'"{price_scale_id}"' if price_scale_id else 'undefined'}
+                    priceScaleId: {f'"{price_scale_id}"' if price_scale_id else 'undefined'},
                     {"""autoscaleInfoProvider: () => ({
                             priceRange: {
                                 minValue: 1_000_000_000,
@@ -447,7 +447,8 @@ class Line(SeriesCommon):
                             },
                         }),
                     """ if chart._scale_candles_only else ''}
-                }}
+                }},
+                {pane_index}
             )
         null''')
 
@@ -486,8 +487,10 @@ class Line(SeriesCommon):
 
 
 class Histogram(SeriesCommon):
-    def __init__(self, chart, name, color, price_line, price_label, scale_margin_top, scale_margin_bottom):
-        super().__init__(chart, name)
+    def __init__(self, chart, name, color, price_line, price_label, scale_margin_top, scale_margin_bottom,
+                 pane_index: int = 0
+    ):
+        super().__init__(chart, name, pane_index)
         self.color = color
         self.run_script(f'''
         {self.id} = {chart.id}.createHistogramSeries(
@@ -499,7 +502,7 @@ class Histogram(SeriesCommon):
                 priceScaleId: '{self.id}',
                 priceFormat: {{type: "volume"}},
             }},
-            // precision: 2,
+            {pane_index}
         )
         {self.id}.series.priceScale().applyOptions({{
             scaleMargins: {{top:{scale_margin_top}, bottom: {scale_margin_bottom}}}
@@ -690,9 +693,12 @@ class Candlestick(SeriesCommon):
 
 
 class AbstractChart(Candlestick, Pane):
+    subcharts = []
+
     def __init__(self, window: Window, width: float = 1.0, height: float = 1.0,
                  scale_candles_only: bool = False, toolbox: bool = False,
-                 autosize: bool = True, position: FLOAT = 'left'):
+                 autosize: bool = True, position: FLOAT = 'left', pane_index:int = 0
+    ):
         Pane.__init__(self, window)
 
         self._lines = []
@@ -702,12 +708,14 @@ class AbstractChart(Candlestick, Pane):
         self.events: Events = Events(self)
 
         from lightweight_charts.polygon import PolygonAPI
+
         self.polygon: PolygonAPI = PolygonAPI(self)
 
         self.run_script(
             f'{self.id} = new Lib.Handler("{self.id}", {width}, {height}, "{position}", {jbool(autosize)})')
 
         Candlestick.__init__(self, self)
+        self.subcharts.append(self.id)
 
         self.topbar: TopBar = TopBar(self)
         if toolbox:
@@ -722,25 +730,28 @@ class AbstractChart(Candlestick, Pane):
     def create_line(
             self, name: str = '', color: str = 'rgba(214, 237, 255, 0.6)',
             style: LINE_STYLE = 'solid', width: int = 2,
-            price_line: bool = True, price_label: bool = True, price_scale_id: Optional[str] = None
+            price_line: bool = True, price_label: bool = True, price_scale_id: Optional[str] = None,
+        pane_index: int = 0
     ) -> Line:
         """
         Creates and returns a Line object.
         """
-        self._lines.append(Line(self, name, color, style, width, price_line, price_label, price_scale_id))
+        self._lines.append(Line(self, name, color, style, width, price_line, price_label, price_scale_id,
+                pane_index=pane_index))
         return self._lines[-1]
 
     def create_histogram(
             self, name: str = '', color: str = 'rgba(214, 237, 255, 0.6)',
             price_line: bool = True, price_label: bool = True,
-            scale_margin_top: float = 0.0, scale_margin_bottom: float = 0.0
+            scale_margin_top: float = 0.0, scale_margin_bottom: float = 0.0,
+        pane_index: int = 0,
     ) -> Histogram:
         """
         Creates and returns a Histogram object.
         """
         return Histogram(
             self, name, color, price_line, price_label,
-            scale_margin_top, scale_margin_bottom)
+            scale_margin_top, scale_margin_bottom, pane_index)
 
     def lines(self) -> List[Line]:
         """
@@ -855,17 +866,9 @@ class AbstractChart(Candlestick, Pane):
         """
         Adds a watermark to the chart.
         """
-        self.run_script(f'''
-          {self.id}.chart.applyOptions({{
-              watermark: {{
-                  visible: true,
-                  horzAlign: 'center',
-                  vertAlign: 'center',
-                  ...{js_json(locals())}
-              }}
-          }})''')
+        self.run_script(f'''{self._chart.id}.createWatermark('{text}', {font_size}, '{color}')''')
 
-    def legend(self, visible: bool = False, ohlc: bool = True, percent: bool = True, lines: bool = True,
+    def legend(self, visible: bool = False, ohlc: bool = True, percent: bool = False, lines: bool = True,
                color: str = 'rgb(191, 195, 203)', font_size: int = 11, font_family: str = 'Monaco',
                text: str = '', color_based_on_candle: bool = False):
         """
@@ -956,6 +959,29 @@ class AbstractChart(Candlestick, Pane):
                         toolbox: bool = False) -> 'AbstractChart':
         if sync is True:
             sync = self.id
-        args = locals()
-        del args['self']
-        return self.win.create_subchart(*args.values())
+        chart = self.win.create_subchart(position, width, height, sync, scale_candles_only,
+                                         sync_crosshairs_only, toolbox)
+        if sync is not None:
+            self.subcharts.append(chart.id)
+        return chart
+
+    def sync_charts(self, sync_crosshairs_only: bool = False):
+        if (len(self.subcharts) > 1):
+            self.run_script(f'''
+                Lib.Handler.syncChartsAll
+                    ([{', '.join(self.subcharts)}],
+                    {'true' if sync_crosshairs_only else 'false'}
+                )
+            ''', run_last=True)
+
+    def resize_pane(self, pane_index: int, height: int):
+        self.run_script(f'''
+            if ({self.id}.chart.panes().length > {pane_index}) {{
+                {self.id}.chart.panes()[{pane_index}].setHeight({height});
+            }}
+        ''')
+
+    def remove_pane(self, pane_index: int):
+        self.run_script(f'''
+                    {self.id}.chart.removePane({pane_index});
+            ''')

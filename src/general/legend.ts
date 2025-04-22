@@ -1,14 +1,19 @@
 import { ISeriesApi, LineData, Logical, MouseEventParams, PriceFormatBuiltIn, SeriesType } from "lightweight-charts";
 import { Handler } from "./handler";
-
+import { htmlToElement } from "./global-params";
 
 interface LineElement {
     name: string;
+    paneIndex: number;
     div: HTMLDivElement;
     row: HTMLDivElement;
-    toggle: HTMLDivElement,
-    series: ISeriesApi<SeriesType>,
+    toggle: HTMLDivElement;
+    series: ISeriesApi<SeriesType>;
     solid: string;
+}
+
+type LineDictionary = {
+    [key: number]: LineElement[];
 }
 
 export class Legend {
@@ -24,7 +29,7 @@ export class Legend {
     private text: HTMLSpanElement;
     private candle: HTMLDivElement;
     public _lines: LineElement[] = [];
-
+    private _lines_grp: LineDictionary = {};
 
     constructor(handler: Handler) {
         this.legendHandler = this.legendHandler.bind(this)
@@ -71,7 +76,7 @@ export class Legend {
     //     if (this.linesEnabled) handler._seriesList.forEach(s => this.makeSeriesRow(s))
     // }
 
-    makeSeriesRow(name: string, series: ISeriesApi<SeriesType>) {
+    makeSeriesRow(name: string, series: ISeriesApi<SeriesType>, paneIndex: number) {
         const strokeColor = '#FFF';
         let openEye = `
     <path style="fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:${strokeColor};stroke-opacity:1;stroke-miterlimit:4;" d="M 21.998437 12 C 21.998437 12 18.998437 18 12 18 C 5.001562 18 2.001562 12 2.001562 12 C 2.001562 12 5.001562 6 12 6 C 18.998437 6 21.998437 12 21.998437 12 Z M 21.998437 12 " transform="matrix(0.833333,0,0,0.833333,0,0)"/>
@@ -87,7 +92,6 @@ export class Legend {
         let div = document.createElement('div')
         let toggle = document.createElement('div')
         toggle.classList.add('legend-toggle-switch');
-
 
         let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("width", "22");
@@ -119,18 +123,37 @@ export class Legend {
         row.appendChild(toggle)
         this.seriesContainer.appendChild(row)
 
-        const color = series.options().color;
+        const color = series.options().baseLineColor;
         this._lines.push({
             name: name,
+            paneIndex: paneIndex,
             div: div,
             row: row,
             toggle: toggle,
             series: series,
             solid: color.startsWith('rgba') ? color.replace(/[^,]+(?=\))/, '1') : color
         });
+
+        this._lines.sort((a,b) => a.paneIndex - b.paneIndex)
+        this._lines_grp = this._lines.reduce((acc:LineDictionary, item:LineElement) => {
+            if (!acc[item.paneIndex]) {
+                acc[item.paneIndex] = [];
+            }
+            acc[item.paneIndex].push(item);
+            return acc;
+        }, {});
+        this.seriesContainer.innerHTML = '';
+        for(const k in this._lines_grp) {
+            for(const l of this._lines_grp[k]) {
+                this.seriesContainer.appendChild(l.row);
+            }
+            this.seriesContainer.appendChild(htmlToElement("<br>")!);
+        }
     }
 
-    legendItemFormat(num: number, decimal: number) { return num.toFixed(decimal).toString().padStart(8, ' ') }
+    legendItemFormat(num: number, decimal: number) { 
+      return num.toFixed(decimal).toString().padStart(8, ' ') 
+    }
 
     shorthandFormat(num: number) {
         const absNum = Math.abs(num)
@@ -159,9 +182,9 @@ export class Legend {
             const timeScale = this.handler.chart.timeScale();
             let coordinate = timeScale.timeToCoordinate(param.time)
             if (coordinate)
-            logical = timeScale.coordinateToLogical(coordinate.valueOf())
+                logical = timeScale.coordinateToLogical(coordinate.valueOf())
             if (logical)
-            data = this.handler.series.dataByIndex(logical.valueOf())
+                data = this.handler.series.dataByIndex(logical.valueOf())
         }
         else {
             data = param.seriesData.get(this.handler.series);
@@ -177,18 +200,6 @@ export class Legend {
                 str += `| C ${this.legendItemFormat(data.close, this.handler.precision)} `
             }
 
-            if (this.percentEnabled) {
-                let percentMove = ((data.close - data.open) / data.open) * 100
-                let color = percentMove > 0 ? options['upColor'] : options['downColor']
-                let percentStr = `${percentMove >= 0 ? '+' : ''}${percentMove.toFixed(2)} %`
-
-                if (this.colorBasedOnCandle) {
-                    str += `| <span style="color: ${color};">${percentStr}</span>`
-                } else {
-                    str += '| ' + percentStr
-                }
-            }
-
             if (this.handler.volumeSeries) {
                 let volumeData: any;
                 if (logical) {
@@ -198,8 +209,21 @@ export class Legend {
                     volumeData = param.seriesData.get(this.handler.volumeSeries)
                 }
                 if (volumeData) {
-                    str += this.ohlcEnabled ? `<br>V ${this.shorthandFormat(volumeData.value)}` : ''
+                    str += this.ohlcEnabled ? `| V ${this.shorthandFormat(volumeData.value)}` : ''
                 }
+            }
+
+            if (this.percentEnabled) {
+              let percentMove = ((data.close - data.open) / data.open) * 100;
+              let color = percentMove > 0 ? options["upColor"] : options["downColor"];
+              let percentStr = `${percentMove >= 0 ? "+" : ""}${percentMove.toFixed(2)} %`;
+
+              if (this.colorBasedOnCandle) {
+                str += `| <span style="color: ${color};">${percentStr}</span>`;
+              }
+              else {
+                str += "| " + percentStr;
+              }
             }
         }
         this.candle.innerHTML = str + '</span>'
