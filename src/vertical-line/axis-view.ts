@@ -15,7 +15,7 @@ export class VerticalLineTimeAxisView implements ISeriesPrimitiveAxisView {
         this._x = point.time ? timeScale.timeToCoordinate(point.time) : timeScale.logicalToCoordinate(point.logical);
     }
     visible() {
-        return !!this._source._options.text;
+        return true;
     }
     tickVisible() {
         return true;
@@ -24,7 +24,7 @@ export class VerticalLineTimeAxisView implements ISeriesPrimitiveAxisView {
         return this._x ?? 0;
     }
     text() {
-        return this._source._options.text || '';
+        return '';
     }
     textColor() {
         return "white";
