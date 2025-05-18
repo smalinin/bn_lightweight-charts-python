@@ -51,6 +51,7 @@ export class Handler {
     public spinner: HTMLDivElement | undefined;
 
     public _seriesList: ISeriesApi<SeriesType>[] = [];
+    private resize_hdr_height: number = 8;
 
     // TODO find a better solution rather than the 'position' parameter
     constructor(
@@ -78,6 +79,32 @@ export class Handler {
         this.wrapper.appendChild(this.div);
         window.containerDiv.append(this.wrapper)
         
+        // --- add this block to enable mouse‐drag height resizing ---
+        const handle = document.createElement('div');
+        handle.classList.add('resize-handle');
+        this.wrapper.appendChild(handle);
+
+        let startY, startHeight;
+        const onMouseMove = (e) => {
+          const delta = e.clientY - startY;
+          const newH = Math.max(50, startHeight + delta); // min height 50px
+          this.wrapper.style.height = `${newH}px`;
+          // Resize the chart canvas accordingly:
+          this.chart.resize(this.wrapper.offsetWidth, newH-this.resize_hdr_height);
+        };
+        const onMouseUp = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        handle.addEventListener('mousedown', (e) => {
+          // prevent selecting text, etc.
+          e.preventDefault();
+          startY = e.clientY;
+          startHeight = this.wrapper.getBoundingClientRect().height;
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+
         this.chart = this._createChart();
         this.series = this.createCandlestickSeries();
         this.volumeSeries = this.createVolumeSeries();
@@ -101,13 +128,13 @@ export class Handler {
     reSize() {
         let topBarOffset = this.scale.height !== 0 ? this._topBar?._div.offsetHeight || 0 : 0
         if (this.scale.height >= 0) {
-            this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, (window.containerDiv.offsetHeight * this.scale.height) - topBarOffset)
+            this.chart.resize(window.innerWidth * this.scale.width, (window.innerHeight * this.scale.height) - topBarOffset - this.resize_hdr_height)
             this.wrapper.style.width = `${100 * this.scale.width}%`
             this.wrapper.style.height = `${100 * this.scale.height}%`
         }
         else {
             var chart_height: number = Math.ceil(Math.abs(this.scale.height));
-            this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, chart_height - topBarOffset)
+            this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, chart_height - topBarOffset - this.resize_hdr_height)
             this.wrapper.style.width = `${100 * this.scale.width}%`
             this.wrapper.style.height = `${chart_height}px`
         }
@@ -130,11 +157,11 @@ export class Handler {
     private _createChart() {
         return createChart(this.div, {
             width: window.containerDiv.offsetWidth * this.scale.width,
-            height: this.scale.height<0 ? Math.ceil(Math.abs(this.scale.height)) : window.containerDiv.offsetHeight * this.scale.height,
+            height: this.scale.height<0 ? Math.ceil(Math.abs(this.scale.height)) : window.innerHeight * this.scale.height,
             layout:{
                 textColor: window.pane.color,
                 background: {
-                    color: '#000000',
+                    color: 'rgb(18,24,38)',
                     type: ColorType.Solid,
                 },
                 fontSize: 12
@@ -153,8 +180,8 @@ export class Handler {
                 }
             },
             grid: {
-                vertLines: {color: 'rgba(29, 30, 38, 5)'},
-                horzLines: {color: 'rgba(29, 30, 58, 5)'},
+                vertLines: { color: '#444', style:1 },
+                horzLines: { color: '#444', style:1 },
             },
             handleScroll: {vertTouchDrag: true},
         })
@@ -222,15 +249,51 @@ export class Handler {
         return serialized;
     }
 
+    public static syncChartsAll(handlers:Handler[], crosshairOnly = false) {
+        // 1) Crosshair
+        handlers.forEach((source) => {
+            source.chart.subscribeCrosshairMove((param) => {
+                handlers.forEach((target) => {
+                    if (target === source) return;
+                    if (!param.time) {
+                        target.chart.clearCrosshairPosition();
+                        return;
+                    }
+                    // get the point from the source series (for legend update)
+                    const point = param.seriesData.get(source.series) || null;
+                    // set the crosshair on the target chart
+                    target.chart.setCrosshairPosition(0, param.time, target.series);
+                    // update the legend on the target
+                    if (point) {
+                        target.legend.legendHandler(point, true);
+                    }
+                });
+            });
+        });
+
+        if (crosshairOnly) return;
+
+        // 2) Visible range synchronization
+        handlers.forEach((source) => {
+            source.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+                handlers.forEach((target) => {
+                    if (target === source || !range) return;
+                    target.chart.timeScale().setVisibleLogicalRange(range);
+                });
+            });
+        });
+    }
+
+
     public static syncCharts(childChart:Handler, parentChart: Handler, crosshairOnly = false) {
-        function crosshairHandler(chart: Handler, point: any) {//point: BarData | LineData) {
-            if (!point) {
-                chart.chart.clearCrosshairPosition()
-                return
+        function crosshairHandler(chart: Handler, point: any, param: any) {
+            if (!param.time) {
+                chart.chart.clearCrosshairPosition();
+                return;
             }
-            // TODO fix any point ?
-            chart.chart.setCrosshairPosition(point.value || point!.close, point.time, chart.series);
-            chart.legend.legendHandler(point, true)
+            chart.chart.setCrosshairPosition(0, param.time, chart.series);
+            if (point)
+                chart.legend.legendHandler(point, true);
         }
 
         function getPoint(series: ISeriesApi<SeriesType>, param: MouseEventParams) {
@@ -249,95 +312,20 @@ export class Handler {
         }
 
         const setParentCrosshair = (param: MouseEventParams) => {
-            crosshairHandler(parentChart, getPoint(childChart.series, param))
+            crosshairHandler(parentChart, getPoint(childChart.series, param), param)
         }
         const setChildCrosshair = (param: MouseEventParams) => {
-            crosshairHandler(childChart, getPoint(parentChart.series, param))
+            crosshairHandler(childChart, getPoint(parentChart.series, param), param)
         }
 
-        let selected = parentChart
-        function addMouseOverListener(
-            thisChart: Handler,
-            otherChart: Handler,
-            thisCrosshair: MouseEventHandler<Time>,
-            otherCrosshair: MouseEventHandler<Time>,
-            thisRange: LogicalRangeChangeEventHandler,
-            otherRange: LogicalRangeChangeEventHandler)
-        {
-            thisChart.wrapper.addEventListener('mouseover', () => {
-                if (selected === thisChart) return
-                selected = thisChart
-                otherChart.chart.unsubscribeCrosshairMove(thisCrosshair)
-                thisChart.chart.subscribeCrosshairMove(otherCrosshair)
-                if (crosshairOnly) return;
-                otherChart.chart.timeScale().unsubscribeVisibleLogicalRangeChange(thisRange)
-                thisChart.chart.timeScale().subscribeVisibleLogicalRangeChange(otherRange)
-            })
-        }
-        addMouseOverListener(
-            parentChart,
-            childChart,
-            setParentCrosshair,
-            setChildCrosshair,
-            setParentRange,
-            setChildRange
-        )
-        addMouseOverListener(
-            childChart,
-            parentChart,
-            setChildCrosshair,
-            setParentCrosshair,
-            setChildRange,
-            setParentRange
-        )
+        parentChart.chart.subscribeCrosshairMove(setChildCrosshair);
+        childChart.chart.subscribeCrosshairMove(setParentCrosshair);
 
-        parentChart.chart.subscribeCrosshairMove(setChildCrosshair)
+        if (crosshairOnly)
+            return
 
-        const parentRange = parentTimeScale.getVisibleLogicalRange()
-        if (parentRange) childTimeScale.setVisibleLogicalRange(parentRange)
-
-        if (crosshairOnly) return;
-        parentChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setChildRange)
-    }
-
-    public static makeSearchBox(chart: Handler) {
-        const searchWindow = document.createElement('div')
-        searchWindow.classList.add('searchbox');
-        searchWindow.style.display = 'none';
-
-        const magnifyingGlass = document.createElement('div');
-        magnifyingGlass.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1"><path style="fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:lightgray;stroke-opacity:1;stroke-miterlimit:4;" d="M 15 15 L 21 21 M 10 17 C 6.132812 17 3 13.867188 3 10 C 3 6.132812 6.132812 3 10 3 C 13.867188 3 17 6.132812 17 10 C 17 13.867188 13.867188 17 10 17 Z M 10 17 "/></svg>`
-
-        const sBox = document.createElement('input');
-        sBox.type = 'text';
-
-        searchWindow.appendChild(magnifyingGlass)
-        searchWindow.appendChild(sBox)
-        chart.div.appendChild(searchWindow);
-
-        chart.commandFunctions.push((event: KeyboardEvent) => {
-            if (window.handlerInFocus !== chart.id || window.textBoxFocused) return false
-            if (searchWindow.style.display === 'none') {
-                if (/^[a-zA-Z0-9]$/.test(event.key)) {
-                    searchWindow.style.display = 'flex';
-                    sBox.focus();
-                    return true
-                }
-                else return false
-            }
-            else if (event.key === 'Enter' || event.key === 'Escape') {
-                if (event.key === 'Enter') window.callbackFunction(`search${chart.id}_~_${sBox.value}`)
-                searchWindow.style.display = 'none'
-                sBox.value = ''
-                return true
-            }
-            else return false
-        })
-        sBox.addEventListener('input', () => sBox.value = sBox.value.toUpperCase())
-        return {
-            window: searchWindow,
-            box: sBox,
-        }
+        childChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setParentRange);
+        parentChart.chart.timeScale().subscribeVisibleLogicalRangeChange(setChildRange);
     }
 
     public static makeSpinner(chart: Handler) {

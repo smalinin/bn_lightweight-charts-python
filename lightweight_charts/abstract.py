@@ -116,13 +116,13 @@ class Window:
         )
         if not sync_id:
             return subchart
-        self.run_script(f'''
-            Lib.Handler.syncCharts(
-                {subchart.id},
-                {sync_id},
-                {jbool(sync_crosshairs_only)}
-            )
-        ''', run_last=True)
+        # self.run_script(f'''
+        #     Lib.Handler.syncCharts(
+        #         {subchart.id},
+        #         {sync_id},
+        #         {jbool(sync_crosshairs_only)}
+        #     )
+        # ''', run_last=True)
         return subchart
 
     def style(
@@ -496,7 +496,7 @@ class Histogram(SeriesCommon):
                 color: '{color}',
                 lastValueVisible: {jbool(price_label)},
                 priceLineVisible: {jbool(price_line)},
-                priceScaleId: '{self.id}',
+                priceScaleId: {'undefined'},
                 priceFormat: {{type: "volume"}},
             }},
             // precision: 2,
@@ -692,6 +692,8 @@ class Candlestick(SeriesCommon):
 
 
 class AbstractChart(Candlestick, Pane):
+    subcharts = []
+
     def __init__(self, window: Window, width: float = 1.0, height: float = 1.0,
                  scale_candles_only: bool = False, toolbox: bool = False,
                  autosize: bool = True, position: FLOAT = 'left'):
@@ -710,6 +712,7 @@ class AbstractChart(Candlestick, Pane):
             f'{self.id} = new Lib.Handler("{self.id}", {width}, {height}, "{position}", {jbool(autosize)})')
 
         Candlestick.__init__(self, self)
+        self.subcharts.append(self.id)
 
         self.topbar: TopBar = TopBar(self)
         if toolbox:
@@ -867,7 +870,7 @@ class AbstractChart(Candlestick, Pane):
               }}
           }})''')
 
-    def legend(self, visible: bool = False, ohlc: bool = True, percent: bool = True, lines: bool = True,
+    def legend(self, visible: bool = False, ohlc: bool = True, percent: bool = False, lines: bool = True,
                color: str = 'rgb(191, 195, 203)', font_size: int = 11, font_family: str = 'Monaco',
                text: str = '', color_based_on_candle: bool = False):
         """
@@ -958,6 +961,17 @@ class AbstractChart(Candlestick, Pane):
                         toolbox: bool = False) -> 'AbstractChart':
         if sync is True:
             sync = self.id
-        args = locals()
-        del args['self']
-        return self.win.create_subchart(*args.values())
+        chart = self.win.create_subchart(position, width, height, sync, scale_candles_only,
+                                         sync_crosshairs_only, toolbox)
+        if sync is not None:
+            self.subcharts.append(chart.id)
+        return chart
+
+    def sync_charts(self, sync_crosshairs_only: bool = False):
+        if (len(self.subcharts) > 1):
+            self.run_script(f'''
+                Lib.Handler.syncChartsAll
+                    ([{', '.join(self.subcharts)}],
+                    {'true' if sync_crosshairs_only else 'false'}
+                )
+            ''', run_last=True)

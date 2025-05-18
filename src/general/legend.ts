@@ -177,18 +177,6 @@ export class Legend {
                 str += `| C ${this.legendItemFormat(data.close, this.handler.precision)} `
             }
 
-            if (this.percentEnabled) {
-                let percentMove = ((data.close - data.open) / data.open) * 100
-                let color = percentMove > 0 ? options['upColor'] : options['downColor']
-                let percentStr = `${percentMove >= 0 ? '+' : ''}${percentMove.toFixed(2)} %`
-
-                if (this.colorBasedOnCandle) {
-                    str += `| <span style="color: ${color};">${percentStr}</span>`
-                } else {
-                    str += '| ' + percentStr
-                }
-            }
-
             if (this.handler.volumeSeries) {
                 let volumeData: any;
                 if (logical) {
@@ -198,7 +186,19 @@ export class Legend {
                     volumeData = param.seriesData.get(this.handler.volumeSeries)
                 }
                 if (volumeData) {
-                    str += this.ohlcEnabled ? `<br>V ${this.shorthandFormat(volumeData.value)}` : ''
+                    str += this.ohlcEnabled ? `| V ${this.shorthandFormat(volumeData.value)}` : ''
+                }
+            }
+
+            if (this.percentEnabled) {
+                let percentMove = ((data.close - data.open) / data.open) * 100
+                let color = percentMove > 0 ? options['upColor'] : options['downColor']
+                let percentStr = `${percentMove >= 0 ? '+' : ''}${percentMove.toFixed(2)} %`
+
+                if (this.colorBasedOnCandle) {
+                    str += `| <span style="color: ${color};">${percentStr}</span>`
+                } else {
+                    str += '| ' + percentStr
                 }
             }
         }
