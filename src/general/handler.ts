@@ -100,9 +100,17 @@ export class Handler {
 
     reSize() {
         let topBarOffset = this.scale.height !== 0 ? this._topBar?._div.offsetHeight || 0 : 0
-        this.chart.resize(window.innerWidth * this.scale.width, (window.innerHeight * this.scale.height) - topBarOffset)
-        this.wrapper.style.width = `${100 * this.scale.width}%`
-        this.wrapper.style.height = `${100 * this.scale.height}%`
+        if (this.scale.height >= 0) {
+            this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, (window.containerDiv.offsetHeight * this.scale.height) - topBarOffset)
+            this.wrapper.style.width = `${100 * this.scale.width}%`
+            this.wrapper.style.height = `${100 * this.scale.height}%`
+        }
+        else {
+            var chart_height: number = Math.ceil(Math.abs(this.scale.height));
+            this.chart.resize(window.containerDiv.offsetWidth * this.scale.width, chart_height - topBarOffset)
+            this.wrapper.style.width = `${100 * this.scale.width}%`
+            this.wrapper.style.height = `${chart_height}px`
+        }
         
         // TODO definitely a better way to do this
         if (this.scale.height === 0 || this.scale.width === 0) {
@@ -121,8 +129,8 @@ export class Handler {
 
     private _createChart() {
         return createChart(this.div, {
-            width: window.innerWidth * this.scale.width,
-            height: window.innerHeight * this.scale.height,
+            width: window.containerDiv.offsetWidth * this.scale.width,
+            height: this.scale.height<0 ? Math.ceil(Math.abs(this.scale.height)) : window.containerDiv.offsetHeight * this.scale.height,
             layout:{
                 textColor: window.pane.color,
                 background: {
