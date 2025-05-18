@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <title>lightweight-charts-python</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="./lightweight-charts.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta charset="UTF-8">
+    <script src=" https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js "></script>
+    <link href=" https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css " rel="stylesheet">
+
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+        /*overflow: hidden;*/
+        overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+            Cantarell, "Helvetica Neue", sans-serif;
+    }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <div style="z-index:99999" class="offcanvas offcanvas-start w-10" tabindex="-1" id="offcanvas" data-bs-keyboard="false" data-bs-backdrop="false">
+        <div class="offcanvas-header">
+            <h6 class="offcanvas-title d-none d-sm-block" id="offcanvas">Menu</h6>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body px-0">
+            <!---->
+            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white" style="width: 380px;">
+                <div id="slist" class="list-group list-group-flush border-bottom scrollarea">
+
+                    <a href="#" class="list-group-item list-group-item-action active py-2 lh-tight_">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <strong class="mb-1">List of financial instruments</strong>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button style="width: 40px; height: 40px; z-index: 1000; position: absolute; left: 10px; top: 2px;" class="btn btn-warning float-start" data-bs-toggle="offcanvas" data-bs-target="#offcanvas" role="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+        </svg>
+    </button>
+
+
+    <nav>
+        <div style="margin-left:70px;" class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-chart" type="button" role="tab" aria-controls="nav-chart" aria-selected="true">Chart</button>
+            <button class="nav-link" id="nav-trades-tab" data-bs-toggle="tab" data-bs-target="#nav-trades" type="button" role="tab" aria-controls="nav-trades" aria-selected="false">Trades</button>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-chart" role="tabpanel" aria-labelledby="nav-chart-tab" tabindex="0">
+            <div id="container"></div>
+        </div>
+        <div class="tab-pane fade" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="0">
+            ...
+            Trades table
+        </div>
+    </div>
+
+    <script src="./bundle.js"></script>
+</body>
+</html>
+
+

@@ -1,8 +1,13 @@
 import asyncio
 import html
+import json
+import os
 
-from .util import parse_event_message
+from .util import (parse_event_message)
+
 from lightweight_charts import abstract
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 try:
     import wx.html2
@@ -108,6 +113,7 @@ class QtChart(abstract.AbstractChart):
         if using_pyside6:
             self.webview.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.webview.load(QUrl.fromLocalFile(abstract.INDEX))
+        self.subcharts.append(self.id)
 
 
     def get_webview(self):
@@ -116,24 +122,25 @@ class QtChart(abstract.AbstractChart):
 
 class StaticLWC(abstract.AbstractChart):
     def __init__(self, width=None, height=None, inner_width=1, inner_height=1,
-                 scale_candles_only: bool = False, toolbox=False, autosize=True):
+                scale_candles_only: bool = False, toolbox=False, autosize=True, template='index.html'):
 
-        with open(abstract.INDEX.replace("index.html", 'styles.css'), 'r') as f:
+        INDEX = os.path.join(current_dir, 'js', template)
+        with open(INDEX.replace(template, 'styles.css'), 'r') as f:
             css = f.read()
-        with open(abstract.INDEX.replace("index.html", 'bundle.js'), 'r') as f:
+        with open(INDEX.replace(template, 'bundle.js'), 'r') as f:
             js = f.read()
-        with open(abstract.INDEX.replace("index.html", 'lightweight-charts.js'), 'r') as f:
+        with open(INDEX.replace(template, 'lightweight-charts.js'), 'r') as f:
             lwc = f.read()
 
-        with open(abstract.INDEX, 'r') as f:
-            self._html = f.read() \
+        with open(INDEX, 'r') as f:
+            self._html_init = f.read() \
                 .replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>") \
                 .replace(' src="./lightweight-charts.js">', f'>{lwc}') \
                 .replace(' src="./bundle.js">', f'>{js}') \
-                .replace('</body>\n</html>', '<script>')
-
+                .replace('</body>\n</html>', '<script>\n')
+        self._html = ''
         super().__init__(abstract.Window(run_script=self.run_script), inner_width, inner_height,
-                         scale_candles_only, toolbox, autosize)
+                        scale_candles_only, toolbox, autosize)
         self.width = width
         self.height = height
 
@@ -143,12 +150,21 @@ class StaticLWC(abstract.AbstractChart):
         else:
             self._html += '\n' + script
 
+    def sync_charts(self, sync_crosshairs_only: bool = False):
+        if (len(self.subcharts) > 1):
+            self._html += '\n'f'''
+                Lib.Handler.syncChartsAll
+                    ([{', '.join(self.subcharts)}],
+                    {'true' if sync_crosshairs_only else 'false'}
+                )
+            ''' + '\n'
+
     def load(self):
         if self.win.loaded:
             return
         self.win.loaded = True
         for script in self.win.final_scripts:
-            self._html += '\n' + script
+            self._html += '\n' + script + '\n'
         self._load()
 
     def _load(self): pass
@@ -161,28 +177,88 @@ class StreamlitChart(StaticLWC):
     def _load(self):
         if sthtml is None:
             raise ModuleNotFoundError('streamlit.components.v1.html was not found, and must be installed to use StreamlitChart.')
-        sthtml(f'{self._html}</script></body></html>', width=self.width, height=self.height)
+        sthtml(f'{self._html_init} {self._html}</script></body></html>', width=self.width, height=self.height)
 
 
 class JupyterChart(StaticLWC):
     def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
-        super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, False)
+        super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
 
-        self.run_script(f'''
-            for (var i = 0; i < document.getElementsByClassName("tv-lightweight-charts").length; i++) {{
-                    var element = document.getElementsByClassName("tv-lightweight-charts")[i];
-                    element.style.overflow = "visible"
-                }}
-            document.getElementById('container').style.overflow = 'hidden'
-            document.getElementById('container').style.borderRadius = '10px'
-            document.getElementById('container').style.width = '{self.width}px'
-            document.getElementById('container').style.height = '100%'
-            ''')
-        self.run_script(f'{self.id}.chart.resize({width*inner_width}, {height*inner_height})')
 
     def _load(self):
         if HTML is None:
             raise ModuleNotFoundError('IPython.display.HTML was not found, and must be installed to use JupyterChart.')
-        html_code = html.escape(f"{self._html}</script></body></html>")
+        html_code = html.escape(f"{self._html_init} {self._html}</script></body></html>")
         iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
         display(HTML(iframe))
+
+
+class HTMLChart(StaticLWC):
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
+        super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
+
+    def _load(self):
+        html_code = f"{self._html_init} {self._html}</script></body></html>"
+        with open('test.html', 'w') as file:
+            file.write(html_code)
+
+
+class HTMLChart_BN(StaticLWC):
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
+        super().__init__(width=width, height=height, inner_width=inner_width, inner_height=inner_height,
+                        scale_candles_only=scale_candles_only, toolbox=toolbox, autosize=True,
+                        template='index_bn.html')
+        self.js_win = []
+        self.names = []
+
+    def _load(self):
+        func_code = ""
+        for i in range(len(self.js_win)):
+            func_code += f'''
+            if (id=={i}) {{
+                document.querySelector('#container').innerHTML = ''
+                {self.js_win[i]}
+            }}
+            '''
+        html_code = f'''{self._html_init}
+        function updateChart(id){{
+            {func_code}
+        }}
+
+        let html = []
+        let stocks = {json.dumps(self.names)};
+
+        let id=0;
+        for(const v of stocks) {{
+            html.push(`<a href="#" class="list-group-item list-group-item-action py-2" datas=${{id++}}>`
+                +`  <div class="d-flex w-100">`
+                +`    <strong class="mb-1">${{v}}</strong>`
+                +`  </div>`
+                +`</a>`);
+        }}
+
+        document.querySelector('#slist').innerHTML = html.join('\\n');
+        document.querySelector('#slist').onclick = (e) => {{
+            const item = e.target.closest('a');
+            const item_datas = item.getAttribute('datas');
+            if (item_datas) {{
+                updateChart(parseInt(item_datas));
+                for (const v of document.querySelectorAll('#slist a'))
+                    v.classList.remove('active')
+                item.classList.add('active')
+            }}
+        }}
+        \n</script></body></html>
+        '''
+        with open('test.html', 'w') as file:
+            file.write(html_code)
+
+    def new_window(self):
+        self.js_win.append(self._html)
+        self._html = self._html_chart_init
+        self.subcharts = [self.id]
+        self._lines = []
+
+    def set_name(self, name):
+        self.names.append(name)
+
