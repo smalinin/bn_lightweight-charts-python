@@ -227,7 +227,7 @@ class SeriesCommon(Pane):
         if format_cols:
             df = self._df_datetime_format(df, exclude_lowercase=self.name)
         if self.name:
-            if self.name in df:
+            if self.name not in df:
                 raise NameError(f'No column named "{self.name}".')
             df = df.rename(columns={self.name: 'value'})
         self.data = df.copy()

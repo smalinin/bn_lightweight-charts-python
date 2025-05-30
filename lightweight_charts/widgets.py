@@ -2,8 +2,10 @@ import asyncio
 import html
 import json
 import os
+from typing import Optional
+import pandas as pd
 
-from .util import (parse_event_message)
+from .util import (format_datetime, parse_event_message, js_data, df_data, series_data)
 
 from lightweight_charts import abstract
 
@@ -210,6 +212,9 @@ class HTMLChart_BN(StaticLWC):
                         template='index_bn.html')
         self.js_win = []
         self.names = []
+        self.trades = []
+        self.performance = []
+        self.strat_titles = []
 
     def _load(self):
         func_code = ""
@@ -218,15 +223,51 @@ class HTMLChart_BN(StaticLWC):
             if (id=={i}) {{
                 document.querySelector('#container').innerHTML = ''
                 {self.js_win[i]}
+                updateTrades(id);
+                updatePerformance(id);
             }}
             '''
         html_code = f'''{self._html_init}
+
+        let html = []
+        const stocks = {json.dumps(self.names)};
+        const trades = {json.dumps(self.trades)};
+        const perf_metrics = {json.dumps(self.performance)};
+        const strategy_titles = {json.dumps(self.strat_titles)};
+
         function updateChart(id){{
+            document.querySelector('#nav-home-tab')?.click();
             {func_code}
         }}
 
-        let html = []
-        let stocks = {json.dumps(self.names)};
+        function updateTrades(id){{
+            const tbl = document.querySelector('#trades tbody');
+            tbl.innerHTML = '';
+            const lst = trades[id];
+            if (lst.length == 0)
+                return;
+            for (const v of lst) {{
+                const pos = v.size > 0 ? 'Long' : 'Short';
+                tbl.innerHTML += `<tr><td>${{pos}}</td><td>${{v.tradeid}}</td><td>${{v.size}}</td>`
+                                +`<td>${{v.dtopen}}</td><td>${{v.priceopen}}</td>`
+                                +`<td>${{v.dtclose}}</td><td>${{v.priceclose}}</td>`
+                                +`<td>${{v.pnlcomm}}</td><td>${{v.return_pct}}</td><td>${{v.commission}}</td>`
+                                +`<td>${{v.barlen}}</td></tr>`;
+            }}
+            document.querySelector('#trades-title').innerText = stocks[id];
+        }}
+
+        function updatePerformance(id){{
+            const tbl = document.querySelector('#performance tbody');
+            tbl.innerHTML = '';
+            const lst = perf_metrics[id];
+            if (lst.length == 0)
+                return;
+            for (const v of lst) {{
+                tbl.innerHTML += `<tr><td>${{v.index}}</td><td>${{v.value}}</td></tr>`;
+            }}
+            document.querySelector('#strategy-title').innerText = strategy_titles[id];
+        }}
 
         let id=0;
         for(const v of stocks) {{
@@ -248,6 +289,7 @@ class HTMLChart_BN(StaticLWC):
                 item.classList.add('active')
             }}
         }}
+        document.querySelectorAll('#slist a')[0]?.click()
         \n</script></body></html>
         '''
         with open('test.html', 'w') as file:
@@ -262,3 +304,20 @@ class HTMLChart_BN(StaticLWC):
     def set_name(self, name):
         self.names.append(name)
 
+    def set_trades(self, df:Optional[pd.DataFrame] = None):
+        v =[]
+        if df is not None and not df.empty:
+            trades = df[['tradeid', 'commission', 'pnlcomm', 'return_pct', 'dateopen', 'dateclose',
+                        'size', 'barlen', 'priceopen', 'priceclose']].copy()
+            trades['dtopen'] = trades['dateopen'].apply(lambda x: format_datetime(x))
+            trades['dtclose'] = trades['dateclose'].apply(lambda x: format_datetime(x))
+            trades.drop(columns=['dateopen', 'dateclose'], inplace=True)
+            v = df_data(trades)
+        self.trades.append(v)
+
+    def set_performance_metrics(self, df:Optional[pd.Series] = None, strat_title: Optional[str] = ''):
+        v = []
+        if df is not None and not df.empty:
+            v = series_data(df)
+        self.performance.append(v)
+        self.strat_titles.append(strat_title)

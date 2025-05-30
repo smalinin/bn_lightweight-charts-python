@@ -18,12 +18,53 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
             Cantarell, "Helvetica Neue", sans-serif;
     }
+
+    .tableview {
+      background: darkgrey;
+      color: black;
+      border-collapse: separate;
+      border-spacing: 0;
+      /*width: 100%;*/
+      border: solid #ccc 1px;
+      -moz-border-radius: 6px;
+      -webkit-border-radius: 6px;
+      border-radius: 6px;
+      font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
+      font-size: 14px;
+    }
+
+    .tableview > tbody > tr:hover {
+      background: #fbf8e9;
+    }
+    
+    .tableview > tbody > tr > td, .tableview > thead > tr > th {
+      border-left: 1px solid #ccc;
+      border-top: 1px solid #ccc;
+      padding: 4px;
+      text-align: left;
+    }
+    
+    .tableview > thead > tr > th, .tableview > thead > tr > td {
+      background-color: #dce9f9;
+      background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
+      background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
+      background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
+      background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
+      background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
+      background-image: linear-gradient(to bottom, #ebf3fc, #dce9f9);
+      -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+      -moz-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+      box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+      border-top: none;
+      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    }
+
     </style>
 </head>
 <body data-bs-theme="dark">
     <div style="z-index:99999" class="offcanvas offcanvas-start w-10" tabindex="-1" id="offcanvas" data-bs-keyboard="false" data-bs-backdrop="false">
         <div class="offcanvas-header">
-            <h6 class="offcanvas-title d-none d-sm-block" id="offcanvas">Menu</h6>
+            <h6 class="offcanvas-title d-none d-sm-block" id="offcanvas">List of instruments</h6>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body px-0">
@@ -33,7 +74,7 @@
 
                     <a href="#" class="list-group-item list-group-item-action active py-2 lh-tight_">
                         <div class="d-flex w-100 align-items-center justify-content-between">
-                            <strong class="mb-1">List of financial instruments</strong>
+                            <strong class="mb-1">List of instruments</strong>
                         </div>
                     </a>
                 </div>
@@ -52,15 +93,47 @@
         <div style="margin-left:70px;" class="nav nav-tabs" id="nav-tab" role="tablist">
             <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-chart" type="button" role="tab" aria-controls="nav-chart" aria-selected="true">Chart</button>
             <button class="nav-link" id="nav-trades-tab" data-bs-toggle="tab" data-bs-target="#nav-trades" type="button" role="tab" aria-controls="nav-trades" aria-selected="false">Trades</button>
+            <button class="nav-link" id="nav-perf-tab" data-bs-toggle="tab" data-bs-target="#nav-perf" type="button" role="tab" aria-controls="nav-perf" aria-selected="false">Performance</button>
         </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">
         <div class="tab-pane fade show active" id="nav-chart" role="tabpanel" aria-labelledby="nav-chart-tab" tabindex="0">
             <div id="container"></div>
         </div>
-        <div class="tab-pane fade" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="0">
-            ...
-            Trades table
+        <div class="tab-pane fade" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="1">
+            <div style="padding-left: 20px; padding-top: 10px; padding-bottom: 10px;">
+            <h6>Trades for [ <span id="trades-title"></span> ] </h6>
+            <table id="trades" class="tableview">
+              <thead>
+                <th> Position </th>
+                <th> TradeId </th>
+                <th> Size </th>
+                <th> Open Date </th>
+                <th> Open Price</th>
+                <th> Close Date </th>
+                <th> Close Price </th>
+                <th> Profit </th>
+                <th> Profit% </th>
+                <th> Comm </th>
+                <th> Bars Help </th>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="nav-perf" role="tabpanel" aria-labelledby="nav-perf-tab" tabindex="2">
+            <div style="padding-left: 20px; padding-top: 10px; padding-bottom: 10px;">
+            <h6>Performance Report for [ <span id="strategy-title"></span> ] </h6>
+            <table id="performance" class="tableview">
+              <thead>
+                <th> Metric </th>
+                <th> Value </th>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            </div>
         </div>
     </div>
 
