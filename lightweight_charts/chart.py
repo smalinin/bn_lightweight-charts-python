@@ -2,8 +2,6 @@ import asyncio
 import json
 import multiprocessing as mp
 import typing
-import webview
-from webview.errors import JavascriptException
 
 from lightweight_charts import abstract
 from .util import parse_event_message, FLOAT
@@ -21,6 +19,7 @@ class CallbackAPI:
 
 
 class PyWV:
+
     def __init__(self, q, emit_q, return_q, loaded_event):
         self.queue = q
         self.return_queue = return_q
@@ -28,6 +27,8 @@ class PyWV:
         self.loaded_event = loaded_event
 
         self.is_alive = True
+
+        import webview
 
         self.callback_api = CallbackAPI(emit_q)
         self.windows: typing.List[webview.Window] = []
@@ -38,6 +39,8 @@ class PyWV:
         self, width, height, x, y, screen=None, on_top=False,
         maximize=False, title=''
     ):
+        import webview
+
         screen = webview.screens[screen] if screen is not None else None
         if maximize:
             if screen is None:
@@ -63,6 +66,9 @@ class PyWV:
 
 
     def loop(self):
+        import webview
+        from webview.errors import JavascriptException
+
         # self.loaded_event.set()
         while self.is_alive:
             i, arg = self.queue.get()

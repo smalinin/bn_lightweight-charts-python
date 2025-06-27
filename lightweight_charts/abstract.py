@@ -273,6 +273,9 @@ class SeriesCommon(Pane):
         self._update_markers()
         return marker_ids
 
+    def _clear_marker_list(self):
+        self.markers = {}
+
     def marker(self, time: Optional[datetime] = None, position: MARKER_POSITION = 'below',
                shape: MARKER_SHAPE = 'arrow_up', color: str = '#2196F3', text: str = ''
                ) -> str:
@@ -374,13 +377,21 @@ class SeriesCommon(Pane):
         self.markers.clear()
         self._update_markers()
 
-    def price_line(self, label_visible: bool = True, line_visible: bool = True, title: str = ''):
+    def create_price_line(self, price: float = 0.0, color: str = 'rgba(214, 237, 255, 0.6)',
+            style: LINE_STYLE = 'large_dashed', width: int = 1, price_label: bool = False,
+            title: str = ''):
         self.run_script(f'''
-        {self.id}.series.applyOptions({{
-            lastValueVisible: {jbool(label_visible)},
-            priceLineVisible: {jbool(line_visible)},
-            title: '{title}',
-        }})''')
+            {self.id}.series.createPriceLine(
+                {{
+                    price: {price},
+                    color: '{color}',
+                    lineStyle: {as_enum(style, LINE_STYLE)},
+                    lineWidth: {width},
+                    axisLabelVisible: {jbool(price_label)},
+                    title: '{title}',
+                }},
+            )
+        ''')
 
     def precision(self, precision: int):
         """
@@ -452,21 +463,6 @@ class Line(SeriesCommon):
             )
         null''')
 
-    # def _set_trend(self, start_time, start_value, end_time, end_value, ray=False, round=False):
-    #     if round:
-    #         start_time = self._single_datetime_format(start_time)
-    #         end_time = self._single_datetime_format(end_time)
-    #     else:
-    #         start_time, end_time = pd.to_datetime((start_time, end_time)).astype('int64') // 10 ** 9
-
-    #     self.run_script(f'''
-    #     {self._chart.id}.chart.timeScale().applyOptions({{shiftVisibleRangeOnNewBar: false}})
-    #     {self.id}.series.setData(
-    #         calculateTrendLine({start_time}, {start_value}, {end_time}, {end_value},
-    #                             {self._chart.id}, {jbool(ray)}))
-    #     {self._chart.id}.chart.timeScale().applyOptions({{shiftVisibleRangeOnNewBar: true}})
-    #     ''')
-
     def delete(self):
         """
         Irreversibly deletes the line, as well as the object that contains the line.
@@ -484,7 +480,6 @@ class Line(SeriesCommon):
             delete {self.id}legendItem
             delete {self.id}
         ''')
-
 
 class Histogram(SeriesCommon):
     def __init__(self, chart, name, color, price_line, price_label, scale_margin_top, scale_margin_bottom):
@@ -708,7 +703,6 @@ class Candlestick(SeriesCommon):
 
 
 class AbstractChart(Candlestick, Pane):
-    subcharts = []
 
     def __init__(self, window: Window, width: float = 1.0, height: float = 1.0,
                  scale_candles_only: bool = False, toolbox: bool = False,
@@ -716,6 +710,7 @@ class AbstractChart(Candlestick, Pane):
         Pane.__init__(self, window)
 
         self._lines = []
+        self.subcharts = []
         self._scale_candles_only = scale_candles_only
         self._width = width
         self._height = height
@@ -978,7 +973,8 @@ class AbstractChart(Candlestick, Pane):
         if sync is True:
             sync = self.id
         chart = self.win.create_subchart(position, width, height, sync, scale_candles_only,
-                                         sync_crosshairs_only, toolbox)
+                                        sync_crosshairs_only, toolbox)
+        self.subcharts.append(chart.id)
         return chart
 
     def sync_charts(self, sync_crosshairs_only: bool = False):

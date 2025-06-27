@@ -11,6 +11,7 @@ setup(
     install_requires=[
         'pandas',
         'pywebview>=5.0.5',
+        'tzlocal'
     ],
     package_data={
         'lightweight_charts': ['js/*'],

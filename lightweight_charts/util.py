@@ -2,7 +2,7 @@ import asyncio
 import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import time
+from tzlocal import get_localzone_name
 from random import choices
 from typing import Literal, Union
 from numpy import isin
@@ -32,7 +32,7 @@ class IDGen(list):
 
 def format_datetime(dt: datetime, tz: Union[str, ZoneInfo] = None) -> str:
     if tz is None:
-        # tz = ZoneInfo(time.tzname[0])
+        # tz = ZoneInfo(get_localzone_name())
         return dt.strftime('%Y-%m-%d %H:%M')
     elif isinstance(tz, str):
         tz = ZoneInfo(tz)
