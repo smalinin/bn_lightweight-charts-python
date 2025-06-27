@@ -216,7 +216,7 @@ class HTMLChart_BN(StaticLWC):
         self.performance = []
         self.strat_titles = []
 
-    def _load(self):
+    def _prepare_html(self):
         func_code = ""
         for i in range(len(self.js_win)):
             func_code += f'''
@@ -241,32 +241,54 @@ class HTMLChart_BN(StaticLWC):
         }}
 
         function updateTrades(id){{
+            document.querySelector('#trades-title').innerText = stocks[id];
             const tbl = document.querySelector('#trades tbody');
             tbl.innerHTML = '';
             const lst = trades[id];
             if (lst.length == 0)
                 return;
+            let state = 0;
+            let _html = '';
             for (const v of lst) {{
-                const pos = v.size > 0 ? 'Long' : 'Short';
-                tbl.innerHTML += `<tr><td>${{pos}}</td><td>${{v.tradeid}}</td><td>${{v.size}}</td>`
-                                +`<td>${{v.dtopen}}</td><td>${{v.priceopen}}</td>`
-                                +`<td>${{v.dtclose}}</td><td>${{v.priceclose}}</td>`
+                if (v.type===0) {{
+                    if (state!==0) {{
+                        _html += `</tbody></table></td></tr>`;
+                        state = 0;
+                    }}
+                    const pos = v.size > 0 ? 'Long' : 'Short';
+                    _html += `<tr><td>${{v.ref}}</td> <td>${{pos}}</td><td>${{v.tradeid}}</td>`
+                                +`<td>${{v.dateopen}}</td><td>${{v.priceopen}}</td>`
+                                +`<td>${{v.dateclose}}</td><td>${{v.priceclose}}</td>`
                                 +`<td>${{v.pnlcomm}}</td><td>${{v.return_pct}}</td><td>${{v.commission}}</td>`
                                 +`<td>${{v.barlen}}</td></tr>`;
+                }}
+                else {{
+                    if (state===0) {{
+                        _html += `<tr><td></td><td></td><td colspan="9" class="separator">`
+                                +`<table class="table table-sm table-striped table-bordered table-hover">`
+                                +`<thead class="table-dark">`
+                                +`<th>Ref</th><th>Date</th><th>Type</th><th>Price</th><th>Size</th></thead>`
+                                +`<tbody>`;
+                        state = 1;
+                    }}
+                    const pos = v.o_ordtype===0 ? 'Buy' : 'Sell';
+                    _html += `<tr><td>${{v.o_ref}}</td><td>${{v.o_datetime}}</td><td>${{pos}}</td>`
+                            +`<td>${{v.o_price}}</td><td>${{v.o_size}}</td></tr>`;
+                }}
             }}
-            document.querySelector('#trades-title').innerText = stocks[id];
+            tbl.innerHTML = _html;
         }}
 
         function updatePerformance(id){{
+            document.querySelector('#strategy-title').innerText = strategy_titles[id];
             const tbl = document.querySelector('#performance tbody');
             tbl.innerHTML = '';
             const lst = perf_metrics[id];
             if (lst.length == 0)
                 return;
             for (const v of lst) {{
-                tbl.innerHTML += `<tr><td>${{v.index}}</td><td>${{v.value}}</td></tr>`;
+                tbl.innerHTML += `<tr><td>${{v.index}}</td><td style="text-align:right">${{v.value}}</td></tr>`;
             }}
-            document.querySelector('#strategy-title').innerText = strategy_titles[id];
         }}
 
         let id=0;
@@ -292,6 +314,10 @@ class HTMLChart_BN(StaticLWC):
         document.querySelectorAll('#slist a')[0]?.click()
         \n</script></body></html>
         '''
+        return html_code
+
+    def _load(self):
+        html_code = self._prepare_html()
         with open('test.html', 'w') as file:
             file.write(html_code)
 
@@ -300,20 +326,13 @@ class HTMLChart_BN(StaticLWC):
         self._html = self._html_chart_init
         self.subcharts = [self.id]
         self._lines = []
+        self._clear_marker_list()
 
     def set_name(self, name):
         self.names.append(name)
 
-    def set_trades(self, df:Optional[pd.DataFrame] = None):
-        v =[]
-        if df is not None and not df.empty:
-            trades = df[['tradeid', 'commission', 'pnlcomm', 'return_pct', 'dateopen', 'dateclose',
-                        'size', 'barlen', 'priceopen', 'priceclose']].copy()
-            trades['dtopen'] = trades['dateopen'].apply(lambda x: format_datetime(x))
-            trades['dtclose'] = trades['dateclose'].apply(lambda x: format_datetime(x))
-            trades.drop(columns=['dateopen', 'dateclose'], inplace=True)
-            v = df_data(trades)
-        self.trades.append(v)
+    def set_trades(self, lst:list):
+        self.trades.append(lst)
 
     def set_performance_metrics(self, df:Optional[pd.Series] = None, strat_title: Optional[str] = ''):
         v = []
@@ -321,3 +340,16 @@ class HTMLChart_BN(StaticLWC):
             v = series_data(df)
         self.performance.append(v)
         self.strat_titles.append(strat_title)
+
+
+class JupyterChart_BN(HTMLChart_BN):
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
+        super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
+
+
+    def _load(self):
+        if HTML is None:
+            raise ModuleNotFoundError('IPython.display.HTML was not found, and must be installed to use JupyterChart.')
+        html_code = html.escape(self._prepare_html())
+        iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
+        display(HTML(iframe))
