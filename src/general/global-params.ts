@@ -20,7 +20,7 @@ interface paneStyle {
 }
 
 export const paneStyleDefault: paneStyle = {
-    backgroundColor: '#0c0d0f',
+    backgroundColor: 'rgb(18,24,38)',
     hoverBackgroundColor: '#3c434c',
     clickBackgroundColor: '#50565E',
     activeBackgroundColor: 'rgba(0, 122, 255, 0.7)',
