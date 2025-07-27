@@ -30,7 +30,7 @@
       -webkit-border-radius: 6px;
       border-radius: 6px;
       font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
-      font-size: 14px;
+      font-size: 16px;
     }
 
     .tableview > tbody > tr:hover {
@@ -103,11 +103,11 @@
         <div class="tab-pane fade" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="1">
             <div style="padding-left: 20px; padding-top: 10px; padding-bottom: 10px;">
             <h6>Trades for [ <span id="trades-title"></span> ] </h6>
-            <table id="trades" class="tableview">
-              <thead>
+            <table id="trades" class="tableview" style="border-collapse: collapse;">
+              <thead style="position: sticky; top: 0;">
+                <th> Ref </th>
                 <th> Position </th>
                 <th> TradeId </th>
-                <th> Size </th>
                 <th> Open Date </th>
                 <th> Open Price</th>
                 <th> Close Date </th>
