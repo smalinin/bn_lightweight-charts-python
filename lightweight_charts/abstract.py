@@ -243,7 +243,6 @@ class SeriesCommon(Pane):
         self.run_script(f'{self.id}.series.update({js_data(series)})')
 
     def _update_markers(self):
-        #TODO??
         self.run_script(f'{self.id}.seriesMarkers.setMarkers({json.dumps(list(self.markers.values()))})')
 
     def marker_list(self, markers: list):
@@ -293,7 +292,6 @@ class SeriesCommon(Pane):
             raise TypeError('Chart marker created before data was set.')
         marker_id = self.win._id_gen.generate()
 
-        #TODO??
         self.markers[marker_id] = {
             "time": int(formatted_time),
             "position": marker_position(position),

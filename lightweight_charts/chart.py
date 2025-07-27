@@ -124,8 +124,8 @@ class WebviewHandler():
         maximize=False, title=''
     ):
         self.function_call_queue.put((
-            'create_window', (width, height, x, y, screen, on_top, maximize, title))
-        )
+            'create_window', (width, height, x, y, screen, on_top, maximize, title)
+        ))
         self.max_window_num += 1
         return self.max_window_num
 
@@ -210,7 +210,6 @@ class Chart(abstract.AbstractChart):
         self.show(block=False)
         try:
             from lightweight_charts import polygon
-
             [asyncio.create_task(self.polygon.async_set(*args)) for args in polygon._set_on_load]
             while 1:
                 while Chart.WV.emit_queue.empty() and self.is_alive:
