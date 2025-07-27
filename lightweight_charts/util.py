@@ -1,6 +1,8 @@
 import asyncio
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
+import time
 from random import choices
 from typing import Literal, Union
 from numpy import isin
@@ -28,6 +30,19 @@ class IDGen(list):
             return f'window.{var}'
         self.generate()
 
+def format_datetime(dt: datetime, tz: Union[str, ZoneInfo] = None) -> str:
+    if tz is None:
+        # tz = ZoneInfo(time.tzname[0])
+        return dt.strftime('%Y-%m-%d %H:%M')
+    elif isinstance(tz, str):
+        tz = ZoneInfo(tz)
+    # If dt does not contain tzinfo, assume it is in the specified zone
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+    else:
+        # Convert datetime to the required timezone
+        dt = dt.astimezone(tz)
+    return dt.strftime('%Y-%m-%d %H:%M GMT%z')
 
 def parse_event_message(window, string):
     name, args = string.split('_~_')
@@ -35,6 +50,25 @@ def parse_event_message(window, string):
     func = window.handlers[name]
     return func, args
 
+
+def df_data(data: Union[pd.DataFrame, pd.Series]):
+    if isinstance(data, pd.DataFrame):
+        d = data.to_dict(orient='records')
+        filtered_records = [{k: v for k, v in record.items() if v is not None and not pd.isna(v)} for record in d]
+    else:
+        d = data.to_dict()
+        filtered_records = {k: v for k, v in d.items()}
+    return filtered_records
+
+def series_data(data: Union[pd.DataFrame, pd.Series]):
+    filtered_records = []
+    for idx, val in data.items():
+        if isinstance(val, float):
+            val_str = f'{val:.4f}'
+        else:
+            val_str = str(val)
+        filtered_records.append({'index': idx, 'value': val_str})
+    return filtered_records
 
 def js_data(data: Union[pd.DataFrame, pd.Series]):
     if isinstance(data, pd.DataFrame):
