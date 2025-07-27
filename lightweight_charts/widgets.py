@@ -204,18 +204,22 @@ class JupyterChart(StaticLWC):
         iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
         display(HTML(iframe))
 
+
 class HTMLChart(StaticLWC):
-    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1,
+                scale_candles_only: bool = False, toolbox: bool = False, filename = "charts.html"):
         super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
+        self.filename = filename
 
     def _load(self):
         html_code = f"{self._html_init} {self._html}</script></body></html>"
-        with open('test.html', 'w') as file:
+        with open(self.filename, 'w') as file:
             file.write(html_code)
 
 
 class HTMLChart_BN(StaticLWC):
-    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, 
+                scale_candles_only: bool = False, toolbox: bool = False, filename = "bn_charts.html"):
         super().__init__(width=width, height=height, inner_width=inner_width, inner_height=inner_height,
                         scale_candles_only=scale_candles_only, toolbox=toolbox, autosize=True,
                         template='index_bn.html')
@@ -224,6 +228,7 @@ class HTMLChart_BN(StaticLWC):
         self.trades = []
         self.performance = []
         self.strat_titles = []
+        self.filename = filename
 
     def _prepare_html(self):
         func_code = ""
@@ -327,7 +332,7 @@ class HTMLChart_BN(StaticLWC):
 
     def _load(self):
         html_code = self._prepare_html()
-        with open('test.html', 'w') as file:
+        with open(self.filename, 'w') as file:
             file.write(html_code)
 
     def new_window(self):
