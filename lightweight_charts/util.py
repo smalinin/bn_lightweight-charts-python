@@ -50,7 +50,6 @@ def parse_event_message(window, string):
     func = window.handlers[name]
     return func, args
 
-
 def df_data(data: Union[pd.DataFrame, pd.Series]):
     if isinstance(data, pd.DataFrame):
         d = data.to_dict(orient='records')

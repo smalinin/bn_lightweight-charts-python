@@ -243,6 +243,7 @@ class SeriesCommon(Pane):
         self.run_script(f'{self.id}.series.update({js_data(series)})')
 
     def _update_markers(self):
+        #TODO??
         self.run_script(f'{self.id}.seriesMarkers.setMarkers({json.dumps(list(self.markers.values()))})')
 
     def marker_list(self, markers: list):
@@ -292,6 +293,7 @@ class SeriesCommon(Pane):
             raise TypeError('Chart marker created before data was set.')
         marker_id = self.win._id_gen.generate()
 
+        #TODO??
         self.markers[marker_id] = {
             "time": int(formatted_time),
             "position": marker_position(position),
@@ -745,7 +747,7 @@ class AbstractChart(Candlestick, Pane):
             self, name: str = '', color: str = 'rgba(214, 237, 255, 0.6)',
             style: LINE_STYLE = 'solid', width: int = 2,
             price_line: bool = True, price_label: bool = True, price_scale_id: Optional[str] = None,
-        pane_index: int = 0
+            pane_index: int = 0
     ) -> Line:
         """
         Creates and returns a Line object.
@@ -758,7 +760,7 @@ class AbstractChart(Candlestick, Pane):
             self, name: str = '', color: str = 'rgba(214, 237, 255, 0.6)',
             price_line: bool = True, price_label: bool = True,
             scale_margin_top: float = 0.0, scale_margin_bottom: float = 0.0,
-        pane_index: int = 0,
+            pane_index: int = 0,
     ) -> Histogram:
         """
         Creates and returns a Histogram object.

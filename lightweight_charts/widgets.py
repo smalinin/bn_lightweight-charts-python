@@ -4,7 +4,6 @@ import json
 import os
 from typing import Optional
 import pandas as pd
-
 from .util import (format_datetime, parse_event_message, js_data, df_data, series_data)
 from lightweight_charts import abstract
 
@@ -117,7 +116,7 @@ class QtChart(abstract.AbstractChart):
         self.subcharts.append(self.id)
 
 
-    def get_webview(self): 
+    def get_webview(self):
         return self.webview
 
 
@@ -165,7 +164,7 @@ class StaticLWC(abstract.AbstractChart):
             return
         self.win.loaded = True
         for script in self.win.final_scripts:
-            self._html += '\n' + script
+            self._html += '\n' + script + '\n'
         self._load()
 
     def _load(self): pass
@@ -185,22 +184,11 @@ class JupyterChart(StaticLWC):
     def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
         super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
 
-        self.run_script(f'''
-            for (var i = 0; i < document.getElementsByClassName("tv-lightweight-charts").length; i++) {{
-                    var element = document.getElementsByClassName("tv-lightweight-charts")[i];
-                    element.style.overflow = "visible"
-                }}
-            document.getElementById('container').style.overflow = 'hidden'
-            document.getElementById('container').style.borderRadius = '10px'
-            document.getElementById('container').style.width = '{self.width}px'
-            document.getElementById('container').style.height = '100%'
-            ''')
-        self.run_script(f'{self.id}.chart.resize({width*inner_width}, {height*inner_height})')
 
     def _load(self):
         if HTML is None:
             raise ModuleNotFoundError('IPython.display.HTML was not found, and must be installed to use JupyterChart.')
-        html_code = html.escape(f"{self._html}</script></body></html>")
+        html_code = html.escape(f"{self._html_init} {self._html}</script></body></html>")
         iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
         display(HTML(iframe))
 
@@ -354,6 +342,7 @@ class HTMLChart_BN(StaticLWC):
             v = series_data(df)
         self.performance.append(v)
         self.strat_titles.append(strat_title)
+
 
 class JupyterChart_BN(HTMLChart_BN):
     def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
