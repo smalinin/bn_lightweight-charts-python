@@ -18,6 +18,7 @@ from .util import (
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(current_dir, 'js', 'index.html')
+INDEX_BN = os.path.join(current_dir, 'js', 'index_bn.html')
 
 
 class Window:
@@ -224,7 +225,7 @@ class SeriesCommon(Pane):
         if format_cols:
             df = self._df_datetime_format(df, exclude_lowercase=self.name)
         if self.name:
-            if self.name not in df:
+            if self.name in df:
                 raise NameError(f'No column named "{self.name}".')
             df = df.rename(columns={self.name: 'value'})
         self.data = df.copy()
@@ -539,8 +540,20 @@ class Candlestick(SeriesCommon):
         self._volume_down_color = 'rgba(200,127,130,0.8)'
 
         self.candle_data = pd.DataFrame()
-
         # self.run_script(f'{self.id}.makeCandlestickSeries()')
+
+    def _prepare_data(self, df: pd.DataFrame):
+        if df is None or df.empty:
+            return None, None
+        df = self._df_datetime_format(df)
+        candle_df = df[['time', 'open', 'high', 'low', 'close']]
+
+        if 'volume' not in df:
+            return candle_df, None
+        volume = df[['time','volume']].rename(columns={'volume': 'value'})
+        volume['color'] = self._volume_down_color
+        volume.loc[df['close'] > df['open'], 'color'] = self._volume_up_color
+        return candle_df, volume
 
     def set(self, df: Optional[pd.DataFrame] = None, keep_drawings=False):
         """
@@ -554,16 +567,19 @@ class Candlestick(SeriesCommon):
             self.candle_data = pd.DataFrame()
             return
         df = self._df_datetime_format(df)
-        self.candle_data = df.copy()
+        df_copy = df.copy()
+        self.candle_data = df_copy[['time', 'open', 'high', 'low', 'close']]
         self._last_bar = df.iloc[-1]
-        self.run_script(f'{self.id}.series.setData({js_data(df)})')
+        candle_js_data = js_data(df[['time', 'open', 'high', 'low', 'close']])
+        self.run_script(f'{self.id}.series.setData({candle_js_data})')
 
         if 'volume' not in df:
             return
-        volume = df.drop(columns=['open', 'high', 'low', 'close']).rename(columns={'volume': 'value'})
+        volume = df[['time', 'volume']].rename(columns={'volume': 'value'})
         volume['color'] = self._volume_down_color
         volume.loc[df['close'] > df['open'], 'color'] = self._volume_up_color
-        self.run_script(f'{self.id}.volumeSeries.setData({js_data(volume)})')
+        volume_js_data = js_data(volume)
+        self.run_script(f'{self.id}.volumeSeries.setData({volume_js_data})')
 
         for line in self._lines:
             if line.name not in df.columns:
@@ -713,8 +729,8 @@ class AbstractChart(Candlestick, Pane):
 
         self.polygon: PolygonAPI = PolygonAPI(self)
 
-        self.run_script(
-            f'{self.id} = new Lib.Handler("{self.id}", {width}, {height}, "{position}", {jbool(autosize)})')
+        self._html_chart_init = f'{self.id} = new Lib.Handler("{self.id}", {width}, {height}, "{position}", {jbool(autosize)})'
+        self.run_script(self._html_chart_init)
 
         Candlestick.__init__(self, self)
         self.subcharts.append(self.id)
@@ -738,8 +754,8 @@ class AbstractChart(Candlestick, Pane):
         """
         Creates and returns a Line object.
         """
-        self._lines.append(Line(self, name, color, style, width, price_line, price_label, price_scale_id,
-                pane_index=pane_index))
+        line = Line(self, name, color, style, width, price_line, price_label, price_scale_id, pane_index=pane_index)
+        self._lines.append(line)
         return self._lines[-1]
 
     def create_histogram(
@@ -751,9 +767,8 @@ class AbstractChart(Candlestick, Pane):
         """
         Creates and returns a Histogram object.
         """
-        return Histogram(
-            self, name, color, price_line, price_label,
-            scale_margin_top, scale_margin_bottom, pane_index)
+        hist = Histogram(self, name, color, price_line, price_label, scale_margin_top, scale_margin_bottom, pane_index)
+        return hist
 
     def lines(self) -> List[Line]:
         """
@@ -963,8 +978,6 @@ class AbstractChart(Candlestick, Pane):
             sync = self.id
         chart = self.win.create_subchart(position, width, height, sync, scale_candles_only,
                                          sync_crosshairs_only, toolbox)
-        if sync is not None:
-            self.subcharts.append(chart.id)
         return chart
 
     def sync_charts(self, sync_crosshairs_only: bool = False):
