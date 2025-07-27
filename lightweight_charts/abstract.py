@@ -642,7 +642,8 @@ class Candlestick(SeriesCommon):
         entire_text_only: bool = False,
         visible: bool = True,
         ticks_visible: bool = False,
-        minimum_width: int = 0
+        minimum_width: int = 0,
+        perm_width: int = 0
     ):
         self.run_script(f'''
             {self.id}.series.priceScale().applyOptions({{
@@ -657,7 +658,8 @@ class Candlestick(SeriesCommon):
                 entireTextOnly: {jbool(entire_text_only)},
                 visible: {jbool(visible)},
                 ticksVisible: {jbool(ticks_visible)},
-                minimumWidth: {minimum_width}
+                minimumWidth: {minimum_width},
+                permWidth: {perm_width}
             }})''')
 
     def candle_style(
