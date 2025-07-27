@@ -499,7 +499,7 @@ class Histogram(SeriesCommon):
                 color: '{color}',
                 lastValueVisible: {jbool(price_label)},
                 priceLineVisible: {jbool(price_line)},
-                priceScaleId: '{self.id}',
+                priceScaleId: {'undefined'},
                 priceFormat: {{type: "volume"}},
             }},
             {pane_index}
@@ -963,8 +963,8 @@ class AbstractChart(Candlestick, Pane):
             sync = self.id
         chart = self.win.create_subchart(position, width, height, sync, scale_candles_only,
                                          sync_crosshairs_only, toolbox)
-        #??if sync is not None:
-        #??    self.subcharts.append(chart.id)
+        if sync is not None:
+            self.subcharts.append(chart.id)
         return chart
 
     def sync_charts(self, sync_crosshairs_only: bool = False):
