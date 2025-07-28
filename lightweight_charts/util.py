@@ -99,7 +99,7 @@ def jbool(b: bool): return 'true' if b is True else 'false' if b is False else N
 
 LINE_STYLE = Literal['solid', 'dotted', 'dashed', 'large_dashed', 'sparse_dotted']
 
-MARKER_POSITION = Literal['above', 'below', 'inside']
+MARKER_POSITION = Literal['above', 'below', 'inside', 'atPriceMiddle', 'atPriceTop', 'atPriceBottom']
 
 MARKER_SHAPE = Literal['arrow_up', 'arrow_down', 'circle', 'square']
 
@@ -128,9 +128,12 @@ def marker_shape(shape: MARKER_SHAPE):
 
 def marker_position(p: MARKER_POSITION):
     return {
-        'above': 'aboveBar',
-        'below': 'belowBar',
+        'above' : 'aboveBar',
+        'below' : 'belowBar',
         'inside': 'inBar',
+        'atPriceMiddle': 'atPriceMiddle',
+        'atPriceTop'   : 'atPriceTop',
+        'atPriceBottom': 'atPriceBottom',
     }.get(p)
 
 

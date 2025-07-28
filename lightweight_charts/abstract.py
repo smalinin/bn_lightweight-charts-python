@@ -266,6 +266,8 @@ class SeriesCommon(Pane):
                 "color": marker['color'],
                 "shape": marker_shape(marker['shape']),
                 "text": marker['text'],
+                "price": marker.get('price', None),
+                "size": marker.get('size', 1),
             }
             marker_ids.append(marker_id)
         self._update_markers()
