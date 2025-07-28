@@ -2043,7 +2043,7 @@ var Lib = (function (exports, lightweightCharts) {
                     },
                     fontSize: 12,
                     panes: {
-                        separatorColor: 'lightgrey', //'#f22c3d',
+                        separatorColor: 'lightgrey',
                         separatorHoverColor: "rgba(255, 0, 0, 0.4)",
                         enableResize: true,
                     },
