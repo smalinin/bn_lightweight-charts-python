@@ -1,8 +1,8 @@
 <div align="center">
 
-# bn_lightweight-charts-python
+# bn-lightweight-charts-python
 
-[![PyPi Release](https://img.shields.io/pypi/v/bn_lightweight-charts?color=32a852&label=PyPi)](https://pypi.org/project/bn_lightweight-charts/)
+[![PyPi Release](https://img.shields.io/pypi/v/bn-lightweight-charts?color=32a852&label=PyPi)](https://pypi.org/project/bn_lightweight-charts/)
 [![Made with Python](https://img.shields.io/badge/Python-3.8+-c7a002?logo=python&logoColor=white)](https://python.org "Go to Python homepage")
 [![License](https://img.shields.io/github/license/smalinin/bn_lightweight-charts-python?color=9c2400)](https://github.com/smalinin/bn_lightweight-charts-python/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/documentation-006ee3)](https://lightweight-charts-python.readthedocs.io/en/latest/index.html)
@@ -13,7 +13,7 @@ lightweight-charts-python aims to provide a simple and pythonic way to access an
 
 ## Installation
 ```
-pip install bn_lightweight-charts
+pip install bn-lightweight-charts
 ```
 ## History
 Package is based on [lightweight-charts-python](https://github.com/louisnw01/lightweight-charts-python)
@@ -44,7 +44,7 @@ ___
 ```
 import pandas as pd
 import webbrowser
-from bn_lightweight_charts import HTMLChart
+from bn-lightweight-charts import HTMLChart
 
 def calculate_sma(df, period: int = 50, name = None):
     name = name or f'SMA {period}'

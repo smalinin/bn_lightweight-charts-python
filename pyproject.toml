@@ -1,0 +1,34 @@
+[project]
+name = "bn-lightweight-charts"
+version = "0.2.0"
+description = "Python framework for TradingView's Lightweight Charts JavaScript library."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "smalinin"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "tzlocal",
+]
+
+
+[project.urls]
+"Homepage" = "https://pypi.org/project/bn-lightweight-charts/"
+"Source" = "https://github.com/smalinin/bn_lightweight-charts-python"
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["bn_lightweight_charts", "bn_lightweight_charts/**"]
+
