@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/github/license/louisnw01/lightweight-charts-python?color=9c2400)](https://github.com/louisnw01/lightweight-charts-python/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/documentation-006ee3)](https://lightweight-charts-python.readthedocs.io/en/latest/index.html)
 
+![cover gif](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/cover.gif?raw=true)
+
 ![cover](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/cover.png)
 
 lightweight-charts-python aims to provide a simple and pythonic way to access and implement [TradingView's Lightweight Charts](https://www.tradingview.com/lightweight-charts/).
