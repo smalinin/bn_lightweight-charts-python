@@ -5,7 +5,7 @@ import os
 from typing import Optional
 import pandas as pd
 from .util import (format_datetime, parse_event_message, js_data, df_data, series_data)
-from lightweight_charts import abstract
+from . import abstract
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 

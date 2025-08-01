@@ -723,7 +723,7 @@ class AbstractChart(Candlestick, Pane):
         self._height = height
         self.events: Events = Events(self)
 
-        from lightweight_charts.polygon import PolygonAPI
+        from .polygon import PolygonAPI
 
         self.polygon: PolygonAPI = PolygonAPI(self)
 
