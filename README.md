@@ -1,25 +1,30 @@
 <div align="center">
 
-# lightweight-charts-python
+# bn_lightweight-charts-python
 
-[![PyPi Release](https://img.shields.io/pypi/v/lightweight-charts?color=32a852&label=PyPi)](https://pypi.org/project/lightweight-charts/)
+[![PyPi Release](https://img.shields.io/pypi/v/bn_lightweight-charts?color=32a852&label=PyPi)](https://pypi.org/project/bn_lightweight-charts/)
 [![Made with Python](https://img.shields.io/badge/Python-3.8+-c7a002?logo=python&logoColor=white)](https://python.org "Go to Python homepage")
-[![License](https://img.shields.io/github/license/louisnw01/lightweight-charts-python?color=9c2400)](https://github.com/louisnw01/lightweight-charts-python/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/smalinin/bn_lightweight-charts-python?color=9c2400)](https://github.com/smalinin/bn_lightweight-charts-python/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/documentation-006ee3)](https://lightweight-charts-python.readthedocs.io/en/latest/index.html)
 
-![cover gif](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/cover.gif?raw=true)
-
-![cover](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/cover.png)
-
 lightweight-charts-python aims to provide a simple and pythonic way to access and implement [TradingView's Lightweight Charts](https://www.tradingview.com/lightweight-charts/).
-</div>
 
+</div>
 
 ## Installation
 ```
-pip install lightweight-charts
+pip install bn_lightweight-charts
 ```
-___
+## History
+Package is based on [lightweight-charts-python](https://github.com/louisnw01/lightweight-charts-python)
+Changes:
+
+ - used lightweight-charts js v:5.x
+ - added milti-pane support from lightweight-charts js v:5.x
+ - added support for charts resize and panel resize
+ - fixed issue with sync charts
+ - added support view in browser
+
 
 ## Features
 1. Streamlined for live data, with methods for updating directly from tick data.
@@ -34,11 +39,59 @@ __Supports:__ Jupyter Notebooks, PyQt6, PyQt5, PySide6, wxPython, Streamlit, and
 PartTimeLarry: [Interactive Brokers API and TradingView Charts in Python](https://www.youtube.com/watch?v=TlhDI3PforA)
 ___
 
+## Samples
+### 0. Multi-pane support
+```
+import pandas as pd
+import webbrowser
+from bn_lightweight_charts import HTMLChart
+
+def calculate_sma(df, period: int = 50, name = None):
+    name = name or f'SMA {period}'
+    return pd.DataFrame({
+        'time': df['date'],
+        name: df['close'].rolling(window=period).mean()
+    }) #.dropna()
+
+def demo():
+    chart = HTMLChart(width=1200, height=800, inner_height=-500, filename='charts.html')
+    chart.legend(visible=True)
+    df = pd.read_csv('./PDATA/4ohlcv.csv')
+    chart.set(df)
+
+    # Pane 0
+    line7 = chart.create_line('SMA 7', color='red', price_line=False, price_label=False)
+    sma7_data = calculate_sma(df, period=7)
+    line7.set(sma7_data)
+    line14 = chart.create_line('SMA 14', color='blue', price_line=False, price_label=False)
+    sma14_data = calculate_sma(df, period=14)
+    line14.set(sma14_data)
+
+    # Pane 1
+    sma20_data = calculate_sma(df, period=20, name='Hist SMA(20)')
+    line20 = chart.create_histogram('Hist SMA(20)', price_line=False, price_label=False, pane_index=1)
+    line20.set(sma20_data)
+
+    # Pane 2
+    sma50_data = calculate_sma(df, period=50)
+    line50 = chart.create_line('SMA 50', color='green', price_line=False, price_label=False, pane_index=2)
+    line50.set(sma50_data)
+
+    chart.load()
+    webbrowser.open(chart.filename)
+
+if __name__ == '__main__':
+    demo()
+```
+![cover gif](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/cover.gif?raw=true)
+
+
+
 ### 1. Display data from a csv:
 
 ```python
 import pandas as pd
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 if __name__ == '__main__':
@@ -60,7 +113,7 @@ ___
 ```python
 import pandas as pd
 from time import sleep
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 if __name__ == '__main__':
 
@@ -94,7 +147,7 @@ ___
 ```python
 import pandas as pd
 from time import sleep
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 if __name__ == '__main__':
@@ -123,7 +176,7 @@ ___
 
 ```python
 import pandas as pd
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 def calculate_sma(df, period: int = 50):
@@ -154,7 +207,7 @@ ___
 
 ```python
 import pandas as pd
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 if __name__ == '__main__':
@@ -191,7 +244,7 @@ ___
 
 ```python
 import pandas as pd
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 def get_bar_data(symbol, timeframe):
@@ -242,11 +295,5 @@ if __name__ == '__main__':
 ___
 
 <div align="center">
-
-[![Documentation](https://img.shields.io/badge/documentation-006ee3)](https://lightweight-charts-python.readthedocs.io/en/latest/index.html)
-
-Inquiries: [shaders_worker_0e@icloud.com](mailto:shaders_worker_0e@icloud.com)
-___
-
 _This package is an independent creation and has not been endorsed, sponsored, or approved by TradingView. The author of this package does not have any official relationship with TradingView, and the package does not represent the views or opinions of TradingView._
 </div>
