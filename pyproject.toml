@@ -22,7 +22,7 @@ dependencies = [
 
 
 [project.urls]
-"Homepage" = "https://pypi.org/project/bn-lightweight-charts/"
+"Homepage" = "https://github.com/smalinin/bn_lightweight-charts-python"
 "Source" = "https://github.com/smalinin/bn_lightweight-charts-python"
 
 [build-system]
@@ -31,4 +31,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["bn_lightweight_charts", "bn_lightweight_charts/**"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["bn_lightweight_charts"]
 
