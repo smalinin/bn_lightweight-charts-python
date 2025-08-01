@@ -3,7 +3,7 @@
 
 ```python
 import pandas as pd
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 if __name__ == '__main__':

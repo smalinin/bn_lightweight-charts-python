@@ -3,7 +3,7 @@
 ```python
 import datetime as dt
 import yfinance as yf
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 
 
 def get_bar_data(symbol, timeframe):

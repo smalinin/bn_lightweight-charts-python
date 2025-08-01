@@ -4,17 +4,16 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='lightweight_charts',
-    version='2.1',
+    name='bn_lightweight_charts',
+    version='0.1',
     packages=find_packages(),
     python_requires='>=3.8',
     install_requires=[
         'pandas',
-        'pywebview>=5.0.5',
         'tzlocal'
     ],
     package_data={
-        'lightweight_charts': ['js/*'],
+        'bn_lightweight_charts': ['js/*'],
     },
     author='louisnw',
     license='MIT',

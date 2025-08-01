@@ -7,7 +7,7 @@
 import pandas as pd
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 
-from lightweight_charts.widgets import QtChart
+from bn_lightweight_charts.widgets import QtChart
 
 app = QApplication([])
 window = QMainWindow()
@@ -40,7 +40,7 @@ ___
 import wx
 import pandas as pd
 
-from lightweight_charts.widgets import WxChart
+from bn_lightweight_charts.widgets import WxChart
 
 
 class MyFrame(wx.Frame):
@@ -72,7 +72,7 @@ ___
 
 ```python
 import pandas as pd
-from lightweight_charts import JupyterChart
+from bn_lightweight_charts import JupyterChart
 
 chart = JupyterChart()
 
@@ -87,7 +87,7 @@ ___
 
 ```python
 import pandas as pd
-from lightweight_charts.widgets import StreamlitChart
+from bn_lightweight_charts.widgets import StreamlitChart
 
 chart = StreamlitChart(width=900, height=600)
 

@@ -18,7 +18,7 @@ body:
       description: >
         Please provide any code relevant to your question.
       placeholder: >
-        from lightweight_charts import Chart...
+        from bn_lightweight_charts import Chart...
       render: python
     validations:
       required: false

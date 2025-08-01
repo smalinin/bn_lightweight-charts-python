@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 
-from lightweight_charts import Chart
+from bn_lightweight_charts import Chart
 from util import BARS, Tester
 
 from time import sleep
