@@ -44,7 +44,7 @@ ___
 ```
 import pandas as pd
 import webbrowser
-from bn-lightweight-charts import HTMLChart
+from bn_lightweight_charts import HTMLChart
 
 def calculate_sma(df, period: int = 50, name = None):
     name = name or f'SMA {period}'
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     chart.show(block=True)
 
 ```
-![setting_data image](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/examples/1_setting_data/setting_data.png)
+![setting_data image](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/examples/1_setting_data/setting_data.png)
 ___
 
 ### 2. Updating bars in real-time:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
 ```
 
-![live data gif](https://github.com/louisnw01/lightweight-charts-python/blob/main/examples/2_live_data/live_data.gif?raw=true)
+![live data gif](https://github.com/smalinin/bn_lightweight-charts-python/blob/main/examples/2_live_data/live_data.gif?raw=true)
 ___
 
 ### 3. Updating bars from tick data in real-time:
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         sleep(0.03)
 
 ```
-![tick data gif](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/examples/3_tick_data/tick_data.gif)
+![tick data gif](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/examples/3_tick_data/tick_data.gif)
 ___
 
 ### 4. Line Indicators:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     chart.show(block=True)
 
 ```
-![line indicators image](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/examples/4_line_indicators/line_indicators.png)
+![line indicators image](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/examples/4_line_indicators/line_indicators.png)
 ___
 
 ### 5. Styling:
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     chart.show(block=True)
 
 ```
-![styling image](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/examples/5_styling/styling.png)
+![styling image](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/examples/5_styling/styling.png)
 ___
 
 ### 6. Callbacks:
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     chart.show(block=True)
 
 ```
-![callbacks gif](https://raw.githubusercontent.com/louisnw01/lightweight-charts-python/main/examples/6_callbacks/callbacks.gif)
+![callbacks gif](https://raw.githubusercontent.com/smalinin/bn_lightweight-charts-python/main/examples/6_callbacks/callbacks.gif)
 ___
 
 <div align="center">
