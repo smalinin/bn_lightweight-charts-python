@@ -344,14 +344,3 @@ class HTMLChart_BN(StaticLWC):
         self.strat_titles.append(strat_title)
 
 
-class JupyterChart_BN(HTMLChart_BN):
-    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, scale_candles_only: bool = False, toolbox: bool = False):
-        super().__init__(width, height, inner_width, inner_height, scale_candles_only, toolbox, True)
-
-
-    def _load(self):
-        if HTML is None:
-            raise ModuleNotFoundError('IPython.display.HTML was not found, and must be installed to use JupyterChart.')
-        html_code = html.escape(self._prepare_html())
-        iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
-        display(HTML(iframe))
