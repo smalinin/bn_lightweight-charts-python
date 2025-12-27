@@ -1,6 +1,6 @@
 [project]
 name = "bn-lightweight-charts"
-version = "0.2.2"
+version = "1.0.0"
 description = "Python framework for TradingView's Lightweight Charts JavaScript library."
 readme = "README.md"
 license = { text = "MIT" }
@@ -8,7 +8,7 @@ authors = [
     { name = "smalinin"}
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
