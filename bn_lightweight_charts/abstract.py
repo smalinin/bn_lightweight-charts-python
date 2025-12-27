@@ -13,7 +13,7 @@ from .topbar import TopBar
 from .util import (
     BulkRunScript, Pane, Events, IDGen, as_enum, jbool, js_json, TIME, NUM, FLOAT,
     LINE_STYLE, MARKER_POSITION, MARKER_SHAPE, CROSSHAIR_MODE,
-    PRICE_SCALE_MODE, marker_position, marker_shape, js_data,
+    PRICE_SCALE_MODE, marker_position, marker_shape, js_data, js_zipdata
 )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -56,7 +56,7 @@ class Window:
         self.scripts.extend(self.final_scripts)
         for script in self.scripts:
             initial_script += f'\n{script}'
-        self.script_func(initial_script)
+        self.script_func(f'(async ()=> {{ {initial_script} }})();')
 
     def run_script(self, script: str, run_last: bool = False):
         """
@@ -216,6 +216,21 @@ class SeriesCommon(Pane):
                 arg = pd.to_datetime(arg)
         arg = self._interval * (arg.timestamp() // self._interval)+self.offset
         return arg
+
+    def set_zipped(self, df: Optional[pd.DataFrame] = None, format_cols: bool = True):
+        if df is None or df.empty:
+            self.run_script(f'{self.id}.series.setData([])')
+            self.data = pd.DataFrame()
+            return
+        if format_cols:
+            df = self._df_datetime_format(df, exclude_lowercase=self.name)
+        if self.name:
+            if self.name not in df:
+                raise NameError(f'No column named "{self.name}".')
+            df = df.rename(columns={self.name: 'value'})
+        self.data = df.copy()
+        self._last_bar = df.iloc[-1]
+        self.run_script(f'{self.id}.series.setData(await decodeGzJSON("{js_zipdata(df)}")); ')
 
     def set(self, df: Optional[pd.DataFrame] = None, format_cols: bool = True):
         if df is None or df.empty:
@@ -578,6 +593,47 @@ class Candlestick(SeriesCommon):
         volume.loc[df['close'] > df['open'], 'color'] = self._volume_up_color
         volume_js_data = js_data(volume)
         self.run_script(f'{self.id}.volumeSeries.setData({volume_js_data})')
+
+        for line in self._lines:
+            if line.name not in df.columns:
+                continue
+            line.set(df[['time', line.name]], format_cols=False)
+        # set autoScale to true in case the user has dragged the price scale
+        self.run_script(f'''
+            if (!{self.id}.chart.priceScale("right").options.autoScale)
+                {self.id}.chart.priceScale("right").applyOptions({{autoScale: true}})
+        ''')
+        # TODO keep drawings doesn't work consistenly w
+        if keep_drawings:
+            self.run_script(f'{self._chart.id}.toolBox?._drawingTool.repositionOnTime()')
+        else:
+            self.run_script(f"{self._chart.id}.toolBox?.clearDrawings()")
+
+    def set_zipped(self, df: Optional[pd.DataFrame] = None, keep_drawings=False):
+        """
+        Sets the initial data for the chart.\n
+        :param df: columns: date/time, open, high, low, close, volume (if volume enabled).
+        :param keep_drawings: keeps any drawings made through the toolbox. Otherwise, they will be deleted.
+        """
+        if df is None or df.empty:
+            self.run_script(f'{self.id}.series.setData([])')
+            self.run_script(f'{self.id}.volumeSeries.setData([])')
+            self.candle_data = pd.DataFrame()
+            return
+        df = self._df_datetime_format(df)
+        df_copy = df.copy()
+        self.candle_data = df_copy[['time', 'open', 'high', 'low', 'close']]
+        self._last_bar = df.iloc[-1]
+        candle_js_data = js_zipdata(df[['time', 'open', 'high', 'low', 'close']])
+        self.run_script(f'{self.id}.series.setData(await decodeGzJSON("{candle_js_data}"))')
+
+        if 'volume' not in df:
+            return
+        volume = df[['time', 'volume']].rename(columns={'volume': 'value'})
+        volume['color'] = self._volume_down_color
+        volume.loc[df['close'] > df['open'], 'color'] = self._volume_up_color
+        volume_js_data = js_zipdata(volume)
+        self.run_script(f'{self.id}.volumeSeries.setData(await decodeGzJSON("{volume_js_data}"))')
 
         for line in self._lines:
             if line.name not in df.columns:

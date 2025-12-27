@@ -177,7 +177,7 @@ class StreamlitChart(StaticLWC):
     def _load(self):
         if sthtml is None:
             raise ModuleNotFoundError('streamlit.components.v1.html was not found, and must be installed to use StreamlitChart.')
-        sthtml(f'{self._html_init} {self._html}</script></body></html>', width=self.width, height=self.height)
+        sthtml(f'{self._html_init}  (async ()=> {{\n{self._html}\n}})();\n </script></body></html>', width=self.width, height=self.height)
 
 
 class JupyterChart(StaticLWC):
@@ -188,7 +188,7 @@ class JupyterChart(StaticLWC):
     def _load(self):
         if HTML is None:
             raise ModuleNotFoundError('IPython.display.HTML was not found, and must be installed to use JupyterChart.')
-        html_code = html.escape(f"{self._html_init} {self._html}</script></body></html>")
+        html_code = html.escape(f"{self._html_init}  (async ()=> {{\n{self._html}\n}})();\n </script></body></html>")
         iframe = f'<iframe width="{self.width}" height="{self.height}" frameBorder="0" srcdoc="{html_code}"></iframe>'
         display(HTML(iframe))
 
@@ -200,13 +200,13 @@ class HTMLChart(StaticLWC):
         self.filename = filename
 
     def _load(self):
-        html_code = f"{self._html_init} {self._html}</script></body></html>"
+        html_code = f"{self._html_init}  (async ()=> {{\n {self._html}\n}})();\n </script></body></html>"
         with open(self.filename, 'w') as file:
             file.write(html_code)
 
 
 class HTMLChart_BN(StaticLWC):
-    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1, 
+    def __init__(self, width: int = 800, height=350, inner_width=1, inner_height=1,
                 scale_candles_only: bool = False, toolbox: bool = False, filename = "bn_charts.html"):
         super().__init__(width=width, height=height, inner_width=inner_width, inner_height=inner_height,
                         scale_candles_only=scale_candles_only, toolbox=toolbox, autosize=True,
@@ -237,7 +237,7 @@ class HTMLChart_BN(StaticLWC):
         const perf_metrics = {json.dumps(self.performance)};
         const strategy_titles = {json.dumps(self.strat_titles)};
 
-        function updateChart(id){{
+        async function updateChart(id){{
             document.querySelector('#nav-home-tab')?.click();
             {func_code}
         }}
