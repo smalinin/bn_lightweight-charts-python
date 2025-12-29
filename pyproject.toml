@@ -1,6 +1,6 @@
 [project]
 name = "bn-lightweight-charts"
-version = "1.0.0"
+version = "1.1.0"
 description = "Python framework for TradingView's Lightweight Charts JavaScript library."
 readme = "README.md"
 license = { text = "MIT" }
