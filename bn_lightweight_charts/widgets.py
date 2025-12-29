@@ -259,8 +259,8 @@ class HTMLChart_BN(StaticLWC):
                     }}
                     const pos = v.size > 0 ? 'Long' : 'Short';
                     _html += `<tr><td>${{v.ref}}</td> <td>${{pos}}</td><td>${{v.tradeid}}</td>`
-                                +`<td>${{v.dateopen}}</td><td>${{v.priceopen}}</td>`
-                                +`<td>${{v.dateclose}}</td><td>${{v.priceclose}}</td>`
+                                +`<td class="dt0">${{v.dateopen}}</td><td>${{v.priceopen}}</td>`
+                                +`<td class="dt1">${{v.dateclose}}</td><td>${{v.priceclose}}</td>`
                                 +`<td>${{v.pnlcomm}}</td><td>${{v.return_pct}}</td><td>${{v.commission}}</td>`
                                 +`<td>${{v.barlen}}</td></tr>`;
                 }}
@@ -274,7 +274,7 @@ class HTMLChart_BN(StaticLWC):
                         state = 1;
                     }}
                     const pos = v.o_ordtype===0 ? 'Buy' : 'Sell';
-                    _html += `<tr><td>${{v.o_ref}}</td><td>${{v.o_datetime}}</td><td>${{pos}}</td>`
+                    _html += `<tr><td>${{v.o_ref}}</td><td class="dt">${{v.o_datetime}}</td><td>${{pos}}</td>`
                             +`<td>${{v.o_price}}</td><td>${{v.o_size}}</td></tr>`;
                 }}
             }}
@@ -314,6 +314,25 @@ class HTMLChart_BN(StaticLWC):
             }}
         }}
         document.querySelectorAll('#slist a')[0]?.click()
+
+        document.querySelector('#trades tbody').ondblclick = (e) => {{
+            const n = e.target;
+            const chart = {self.id}.chart;
+            if (n.nodeName==='TD' && n.classList.contains('dt0')) {{
+                const dt0 = n.innerText
+                const dt1 = n.parentNode.querySelector('td.dt1')?.innerText
+                scrollToTime(chart, dt0, dt1)
+            }}
+            else if (n.nodeName==='TD' && n.classList.contains('dt1')) {{
+                const dt1 = n.innerText
+                const dt0 = n.parentNode.querySelector('td.dt0')?.innerText
+                scrollToTime(chart, dt0, dt1)
+            }}
+            else if (n.nodeName==='TD' && n.classList.contains('dt')) {{
+                const dt0 = n.innerText
+                scrollToTime(chart, dt0)
+            }}
+        }}
         \n</script></body></html>
         '''
         return html_code

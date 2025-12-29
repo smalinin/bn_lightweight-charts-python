@@ -19,6 +19,14 @@
             Cantarell, "Helvetica Neue", sans-serif;
     }
 
+    td.dt0, td.dt1, td.dt {
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    td.dt0, td.dt1{
+        color: blue;
+    }
+
     .tableview {
       background: darkgrey;
       color: black;
@@ -163,6 +171,30 @@
             return JSON.parse(s)
           } catch {
             return []
+          }
+        }
+
+        function scrollToTime(chart, stm0, stm1)
+        {
+          const tm0 = (new Date((stm0+":00").replace(' ','T')+'Z')).getTime()/1000
+          const tm1 = stm1 ? (new Date((stm1+":00").replace(' ','T')+'Z')).getTime()/1000 : null
+
+          const scale = chart.timeScale()
+          const tc0 = scale.timeToCoordinate(tm0)
+          if (tc0) {
+            const idx0 = scale.coordinateToLogical(tc0)
+            if (tm1) {
+              const tc1 = scale.timeToCoordinate(tm1)
+              if (tc1) {
+                const idx1 = scale.coordinateToLogical(tc1)
+                scale.setVisibleLogicalRange({ from: idx0 - 5, to: idx1 + 5 });
+                document.querySelector("#nav-home-tab").click();
+              }
+            }
+            else {
+                scale.setVisibleLogicalRange({ from: idx0 - 5, to: idx0 + 200 + 5 });
+                document.querySelector("#nav-home-tab").click();
+            }
           }
         }
     </script>
