@@ -267,8 +267,8 @@ class HTMLChart_BN(StaticLWC):
                 else {{
                     if (state===0) {{
                         _html += `<tr><td></td><td></td><td colspan="9" class="separator">`
-                                +`<table class="table table-sm table-striped table-bordered table-hover">`
-                                +`<thead class="table-dark">`
+                                +`<table class="tableview-dark">`
+                                +`<thead>`
                                 +`<th>Ref</th><th>Date</th><th>Type</th><th>Price</th><th>Size</th></thead>`
                                 +`<tbody>`;
                         state = 1;
@@ -295,9 +295,9 @@ class HTMLChart_BN(StaticLWC):
 
         let id=0;
         for(const v of stocks) {{
-            html.push(`<a href="#" class="list-group-item list-group-item-action py-2" datas=${{id++}}>`
-                +`  <div class="d-flex w-100">`
-                +`    <strong class="mb-1">${{v}}</strong>`
+            html.push(`<a href="#" datas=${{id++}}>`
+                +`  <div>`
+                +`    <strong>${{v}}</strong>`
                 +`  </div>`
                 +`</a>`);
         }}

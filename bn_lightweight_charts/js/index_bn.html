@@ -1,142 +1,512 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="" data-theme="dark">
 <head>
     <title>bn_lightweight-charts-python</title>
     <link rel="stylesheet" href="styles.css">
     <script src="./lightweight-charts.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <meta charset="UTF-8">
-    <script src=" https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js "></script>
-    <link href=" https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css " rel="stylesheet">
 
     <style>
+    :root,
+    html[data-theme="dark"] {
+        --bg:          #16181c;
+        --surface:     #1e2229;
+        --surface2:    #252b35;
+        --border:      #2e3440;
+        --border2:     #3b4455;
+        --text:        #cdd6f4;
+        --text-muted:  #7d8aa0;
+        --accent:      #5b8dee;
+        --accent-dim:  #243351;
+        --row-hover:   #2b3853;
+        --green:       #a6e3a1;
+        --amber:       #f9c74f;
+        --focus:       #8fb6ff;
+        --radius:      6px;
+        --font:        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        --font-mono:   "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+        /* sub-table hardcoded colors */
+        --sub-bg:      #12141a;
+        --sub-odd:     #181b22;
+        --sub-even:    #12141a;
+        --sub-hover:   #1f2d4a;
+        --sub-head:    #0d0f14;
+    }
+
+    html[data-theme="light"] {
+        --bg:          #d8dce8;
+        --surface:     #e2e6f0;
+        --surface2:    #cdd2df;
+        --border:      #b4baca;
+        --border2:     #9aa1b5;
+        --text:        #1a1d24;
+        --text-muted:  #525a6e;
+        --accent:      #2563eb;
+        --accent-dim:  #cad7f7;
+        --row-hover:   #b7c8f5;
+        --green:       #16a34a;
+        --amber:       #d97706;
+        --focus:       #1d4ed8;
+        --sub-bg:      #cdd2df;
+        --sub-odd:     #c4c9d8;
+        --sub-even:    #cdd2df;
+        --sub-hover:   #bfcef5;
+        --sub-head:    #dde1ea;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
         margin: 0;
         padding: 0;
-        /*overflow: hidden;*/
         overflow-y: auto;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-            Cantarell, "Helvetica Neue", sans-serif;
+        font-family: var(--font);
+        font-size: 14px;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
     }
 
+    /* Clickable date cells */
     td.dt0, td.dt1, td.dt {
         cursor: pointer;
-        text-decoration: underline;
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
     }
-    td.dt0, td.dt1{
-        color: blue;
+    td.dt0, td.dt1 { color: var(--accent); }
+
+    :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
     }
 
+    button:focus-visible,
+    #slist a:focus-visible,
+    td.dt0:focus-visible,
+    td.dt1:focus-visible,
+    td.dt:focus-visible {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent);
+        border-radius: 4px;
+    }
+
+    /* ── Main trades / performance table ─────────────────────── */
     .tableview {
-      background: darkgrey;
-      color: black;
-      border-collapse: separate;
-      border-spacing: 0;
-      /*width: 100%;*/
-      border: solid #ccc 1px;
-      -moz-border-radius: 6px;
-      -webkit-border-radius: 6px;
-      border-radius: 6px;
-      font-family: 'trebuchet MS' , 'Lucida sans' , Arial;
-      font-size: 16px;
+        background: var(--surface);
+        color: var(--text);
+        border-collapse: collapse;
+        border: 1px solid var(--border2);
+        border-radius: var(--radius);
+        font-family: var(--font);
+        font-size: 14px;
+        overflow: hidden;
     }
 
-    .tableview > tbody > tr:hover {
-      background: #fbf8e9;
-    }
-    
-    .tableview > tbody > tr > td, .tableview > thead > tr > th {
-      border-left: 1px solid #ccc;
-      border-top: 1px solid #ccc;
-      padding: 4px;
-      text-align: left;
-    }
-    
-    .tableview > thead > tr > th, .tableview > thead > tr > td {
-      background-color: #dce9f9;
-      background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
-      background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
-      background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
-      background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
-      background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
-      background-image: linear-gradient(to bottom, #ebf3fc, #dce9f9);
-      -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-      -moz-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-      box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-      border-top: none;
-      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    .tableview > tbody > tr:nth-child(even) { background: var(--surface2); }
+    .tableview > tbody > tr:hover           { background: var(--row-hover); transition: background .12s; }
+
+    .tableview > tbody > tr > td,
+    .tableview > thead > tr > th {
+        border-bottom: 1px solid var(--border);
+        padding: 6px 10px;
+        text-align: left;
+        white-space: nowrap;
     }
 
+    .tableview > thead > tr > th {
+        background: var(--surface2);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border2);
+    }
+
+    .tableview > tbody > tr > td {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    #trades > thead > tr > th:nth-child(5),
+    #trades > thead > tr > th:nth-child(7),
+    #trades > thead > tr > th:nth-child(8),
+    #trades > thead > tr > th:nth-child(9),
+    #trades > thead > tr > th:nth-child(10),
+    #trades > thead > tr > th:nth-child(11),
+    #trades > tbody > tr > td:nth-child(5),
+    #trades > tbody > tr > td:nth-child(7),
+    #trades > tbody > tr > td:nth-child(8),
+    #trades > tbody > tr > td:nth-child(9),
+    #trades > tbody > tr > td:nth-child(10),
+    #trades > tbody > tr > td:nth-child(11) {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    #performance > tbody > tr > td:nth-child(2) {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-family: var(--font-mono);
+    }
+
+    #trades > thead > tr > th:nth-child(4),
+    #trades > thead > tr > th:nth-child(6),
+    #trades > tbody > tr > td:nth-child(4),
+    #trades > tbody > tr > td:nth-child(6) {
+        font-variant-numeric: tabular-nums;
+        font-family: var(--font-mono);
+    }
+
+    .num-pos {
+        color: var(--green);
+        font-weight: 600;
+    }
+
+    .num-neg {
+        color: #ef6b73;
+        font-weight: 600;
+    }
+
+    .num-zero {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .thead-sticky > tr > th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    /* ── Sub-table (orders inside a trade) ───────────────────── */
+    .tableview-dark {
+        width: 100%;
+        background: #12141a;
+        color: var(--text);
+        border-collapse: collapse;
+        border: 1px solid var(--border2);
+        border-radius: var(--radius);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        margin: 4px 0 6px;
+        overflow: hidden;
+    }
+
+    .tableview-dark { background: var(--sub-bg); }
+    .tableview-dark > tbody > tr:nth-child(odd)  { background: var(--sub-odd); }
+    .tableview-dark > tbody > tr:nth-child(even) { background: var(--sub-even); }
+    .tableview-dark > tbody > tr:hover           { background: var(--sub-hover); transition: background .1s; }
+
+    .tableview-dark > tbody > tr > td,
+    .tableview-dark > thead > tr > th {
+        border-bottom: 1px solid var(--border);
+        padding: 4px 8px;
+        text-align: left;
+    }
+
+    .tableview-dark > tbody > tr > td, .tableview-perf > tbody > tr > td {
+        border-left: 1px solid var(--border);
+    }
+
+    .tableview-dark > thead > tr > th {
+        background: var(--sub-head);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border2);
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    #sidebar {
+        position: fixed;
+        top: 0; left: -420px;
+        width: 360px;
+        height: 100%;
+        background: var(--surface);
+        color: var(--text);
+        z-index: 99999;
+        transition: left .25s cubic-bezier(.4,0,.2,1);
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border2);
+        box-shadow: 4px 0 24px rgba(0,0,0,.6);
+    }
+
+    #sidebar.open { left: 0; }
+
+    #sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease;
+        z-index: 99998;
+    }
+
+    #sidebar-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border2);
+        background: var(--surface2);
+    }
+
+    #sidebar-header h6 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    #sidebar-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 2px 6px;
+        line-height: 1;
+        border-radius: 4px;
+        transition: color .12s, background .12s;
+    }
+    #sidebar-close:hover { color: var(--text); background: var(--border2); }
+
+    #sidebar-body { flex: 1; overflow-y: auto; padding: 0; }
+
+    #slist { display: flex; flex-direction: column; }
+
+    #slist a {
+        padding: 9px 16px;
+        text-decoration: none;
+        color: var(--text);
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background .12s, color .12s;
+    }
+
+    #slist a:hover   { background: var(--surface2); }
+    #slist a.active  { background: var(--accent-dim); color: var(--accent); font-weight: normal; }
+
+    /* ── Hamburger button ────────────────────────────────────── */
+    #menu-btn {
+        width: 36px; height: 36px;
+        z-index: 1000;
+        position: absolute;
+        left: 10px; top: 4px;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        transition: background .15s, transform .1s;
+        box-shadow: 0 2px 8px rgba(91,141,238,.35);
+    }
+    #menu-btn:hover  { background: #7aa4f5; transform: scale(1.06); }
+    #menu-btn:active { transform: scale(.96); }
+
+    #menu-btn:focus-visible,
+    #theme-btn:focus-visible,
+    #nav-tab button:focus-visible,
+    #sidebar-close:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+    }
+
+    /* ── Theme toggle button ───────────────────────────────────── */
+    #theme-btn {
+        margin-left: auto;
+        margin-bottom: 8px;
+        background: none;
+        border: 1px solid var(--border2);
+        border-radius: var(--radius);
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        font-size: 12px;
+        font-family: var(--font);
+        font-weight: 500;
+        transition: color .15s, border-color .15s, background .15s;
+        white-space: nowrap;
+    }
+    #theme-btn:hover {
+        color: var(--text);
+        border-color: var(--text-muted);
+        background: var(--surface2);
+    }
+    #theme-btn svg { flex-shrink: 0; }
+
+    /* ── Nav tabs ────────────────────────────────────────────── */
+    #nav-tab {
+        display: flex;
+        height: 44px;
+        margin-left: 60px;
+        border-bottom: 1px solid var(--border2);
+        padding: 0 8px;
+        gap: 2px;
+        align-items: flex-end;
+        background: var(--surface);
+    }
+
+    #nav-tab button {
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0 14px 10px;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-family: var(--font);
+        font-weight: 500;
+        letter-spacing: .02em;
+        transition: color .15s, border-color .15s;
+        white-space: nowrap;
+    }
+
+    #nav-tab button:hover { color: var(--text); }
+
+    #nav-tab button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    /* ── Tab content ─────────────────────────────────────────── */
+    .tab-pane          { display: none; }
+    .tab-pane.active   { display: block; }
+
+    .tab-content-inner {
+        padding: 14px 20px 18px;
+    }
+
+    .tab-section-head {
+        display: flex;
+        align-items: baseline;
+        gap: 50px;
+        margin-bottom: 8px;
+    }
+
+    .tab-section-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: .02em;
+    }
+
+    .tab-section-title span {
+        color: var(--text);
+        font-weight: 600;
+    }
+
+    .tab-helper {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
+        letter-spacing: .01em;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    #trades,
+    #performance {
+        margin-top: 8px;
+    }
+
+    #trades > tbody > tr > td,
+    #performance > tbody > tr > td {
+        vertical-align: middle;
+    }
     </style>
 </head>
-<body data-bs-theme="dark">
-    <div style="z-index:99999" class="offcanvas offcanvas-start w-10" tabindex="-1" id="offcanvas" data-bs-keyboard="false" data-bs-backdrop="false">
-        <div class="offcanvas-header">
-            <h6 class="offcanvas-title d-none d-sm-block" id="offcanvas">List of instruments</h6>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<body>
+    <!-- Sidebar -->
+    <div id="sidebar-backdrop" aria-hidden="true"></div>
+    <div id="sidebar">
+        <div id="sidebar-header">
+            <h6>List of instruments</h6>
+            <button id="sidebar-close" aria-label="Close">&#x2715;</button>
         </div>
-        <div class="offcanvas-body px-0">
-            <!---->
-            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white" style="width: 380px;">
-                <div id="slist" class="list-group list-group-flush border-bottom scrollarea">
-
-                    <a href="#" class="list-group-item list-group-item-action active py-2 lh-tight_">
-                        <div class="d-flex w-100 align-items-center justify-content-between">
-                            <strong class="mb-1">List of instruments</strong>
-                        </div>
-                    </a>
-                </div>
+        <div id="sidebar-body">
+            <div id="slist">
             </div>
         </div>
     </div>
 
-    <button style="width: 40px; height: 40px; z-index: 1000; position: absolute; left: 10px; top: 2px;" class="btn btn-warning float-start" data-bs-toggle="offcanvas" data-bs-target="#offcanvas" role="button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+    <!-- Hamburger button -->
+    <button id="menu-btn" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
         </svg>
     </button>
 
-
     <nav>
-        <div style="margin-left:70px;" class="nav nav-tabs" id="nav-tab" role="tablist">
-            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-chart" type="button" role="tab" aria-controls="nav-chart" aria-selected="true">Chart</button>
-            <button class="nav-link" id="nav-trades-tab" data-bs-toggle="tab" data-bs-target="#nav-trades" type="button" role="tab" aria-controls="nav-trades" aria-selected="false">Trades</button>
-            <button class="nav-link" id="nav-perf-tab" data-bs-toggle="tab" data-bs-target="#nav-perf" type="button" role="tab" aria-controls="nav-perf" aria-selected="false">Performance</button>
+        <div id="nav-tab" role="tablist">
+            <button class="active" id="nav-home-tab" data-tab="nav-chart" type="button" role="tab" aria-controls="nav-chart" aria-selected="true">Chart</button>
+            <button id="nav-trades-tab" data-tab="nav-trades" type="button" role="tab" aria-controls="nav-trades" aria-selected="false">Trades</button>
+            <button id="nav-perf-tab" data-tab="nav-perf" type="button" role="tab" aria-controls="nav-perf" aria-selected="false">Performance</button>
+            <button id="theme-btn" aria-label="Toggle theme"></button>
         </div>
     </nav>
-    <div class="tab-content" id="nav-tabContent">
-        <div class="tab-pane fade show active" id="nav-chart" role="tabpanel" aria-labelledby="nav-chart-tab" tabindex="0">
+    <div id="nav-tabContent">
+                <div class="tab-pane active" id="nav-chart" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
             <div id="container"></div>
         </div>
-        <div class="tab-pane fade" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="1">
-            <div style="padding-left: 20px; padding-top: 10px; padding-bottom: 10px;">
-            <h6>Trades for [ <span id="trades-title"></span> ] </h6>
-            <table id="trades" class="tableview" style="border-collapse: collapse;">
-              <thead style="position: sticky; top: 0;">
-                <th> Ref </th>
-                <th> Position </th>
-                <th> TradeId </th>
-                <th> Open Date </th>
-                <th> Open Price</th>
-                <th> Close Date </th>
-                <th> Close Price </th>
-                <th> Profit </th>
-                <th> Profit% </th>
-                <th> Comm </th>
-                <th> Bars Help </th>
+                <div class="tab-pane" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="0">
+            <div class="tab-content-inner">
+                        <div class="tab-section-head">
+                            <p class="tab-section-title">Trades for [ <span id="trades-title"></span> ]</p>
+                            <p class="tab-helper">Tip: Double-click a date/time to jump to this trade on chart.</p>
+                        </div>
+            <table id="trades" class="tableview">
+                            <thead class="thead-sticky">
+                                <tr>
+                                    <th>Ref</th>
+                                    <th>Position</th>
+                                    <th>TradeId</th>
+                                    <th>Open Date</th>
+                                    <th>Open Price</th>
+                                    <th>Close Date</th>
+                                    <th>Close Price</th>
+                                    <th>Profit</th>
+                                    <th>Profit %</th>
+                                    <th>Comm</th>
+                                    <th>Bars</th>
+                                </tr>
               </thead>
               <tbody>
               </tbody>
             </table>
             </div>
         </div>
-        <div class="tab-pane fade" id="nav-perf" role="tabpanel" aria-labelledby="nav-perf-tab" tabindex="2">
-            <div style="padding-left: 20px; padding-top: 10px; padding-bottom: 10px;">
-            <h6>Performance Report for [ <span id="strategy-title"></span> ] </h6>
-            <table id="performance" class="tableview">
+                <div class="tab-pane" id="nav-perf" role="tabpanel" aria-labelledby="nav-perf-tab" tabindex="0">
+            <div class="tab-content-inner">
+            <p class="tab-section-title">Performance Report for [ <span id="strategy-title"></span> ]</p>
+            <table id="performance" class="tableview tableview-perf">
               <thead>
-                <th> Metric </th>
-                <th> Value </th>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                </tr>
               </thead>
               <tbody>
               </tbody>
@@ -147,20 +517,71 @@
 
     <script src="./bundle.js"></script>
     <script>
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+        const menuBtn = document.getElementById('menu-btn');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarBackdrop.classList.add('open');
+            menuBtn.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarBackdrop.classList.remove('open');
+            menuBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        menuBtn.addEventListener('click', openSidebar);
+        document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+        });
+
+        // Theme toggle
+        const _sunIcon  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/></svg> Light`;
+        const _moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/></svg> Dark`;
+
+        const _themeBtn = document.getElementById('theme-btn');
+        function _applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            _themeBtn.innerHTML = theme === 'dark' ? _sunIcon : _moonIcon;
+            _themeBtn.title = theme === 'dark' ? 'Switch to Light theme' : 'Switch to Dark theme';
+        }
+        _themeBtn.addEventListener('click', () => {
+            _applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+        _applyTheme(localStorage.getItem('theme') || 'dark');
+
+        // Tab switching
+        document.querySelectorAll('#nav-tab button[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#nav-tab button').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
         async function decodeGzipBase64(b64) {
-          // base64 -> Uint8Array
           const bytes = Uint8Array.from(
             atob(b64),
             c => c.charCodeAt(0)
           );
 
-          // gunzip
           const stream = new DecompressionStream("gzip");
           const decompressedStream = new Blob([bytes])
             .stream()
             .pipeThrough(stream);
 
-          // Uint8Array -> string
           const decompressed = await new Response(decompressedStream).arrayBuffer();
           return new TextDecoder("utf-8").decode(decompressed);
         }
@@ -197,6 +618,60 @@
             }
           }
         }
+
+        function parseLocaleNumber(text) {
+            const t = (text || '').replace(/\s+/g, '').replace(',', '.');
+            if (!t) return NaN;
+            const n = Number(t);
+            return Number.isFinite(n) ? n : NaN;
+        }
+
+        function decorateSignedCell(cell) {
+            if (!cell) return;
+            const raw = (cell.textContent || '').trim();
+            if (!raw) return;
+
+            cell.classList.remove('num-pos', 'num-neg', 'num-zero');
+
+            const n = parseLocaleNumber(raw.replace('%', ''));
+            if (Number.isNaN(n)) return;
+            if (n > 0) cell.classList.add('num-pos');
+            else if (n < 0) cell.classList.add('num-neg');
+            else cell.classList.add('num-zero');
+        }
+
+        function decoratePerformanceValueCell(cell) {
+            if (!cell) return;
+            const metricCell = cell.parentElement?.children?.[0];
+            const metric = (metricCell?.textContent || '').toLowerCase();
+
+            const isSignedMetric = /(profit|return|drawdown|pnl|gain|loss|sharpe|calmar|sqn|vwr)/i.test(metric);
+            if (!isSignedMetric) {
+                cell.classList.remove('num-pos', 'num-neg', 'num-zero');
+                return;
+            }
+            decorateSignedCell(cell);
+        }
+
+        function refreshNumericDecorations() {
+            document.querySelectorAll('#trades > tbody > tr').forEach(row => {
+                decorateSignedCell(row.children[7]);
+                decorateSignedCell(row.children[8]);
+            });
+
+            document.querySelectorAll('#performance > tbody > tr > td:nth-child(2)').forEach(decoratePerformanceValueCell);
+        }
+
+        const tradesBody = document.querySelector('#trades > tbody');
+        const perfBody = document.querySelector('#performance > tbody');
+        if (tradesBody) {
+            new MutationObserver(refreshNumericDecorations).observe(tradesBody, { childList: true, subtree: true, characterData: true });
+        }
+        if (perfBody) {
+            new MutationObserver(refreshNumericDecorations).observe(perfBody, { childList: true, subtree: true, characterData: true });
+        }
+
+        refreshNumericDecorations();
     </script>
 </body>
 </html>
