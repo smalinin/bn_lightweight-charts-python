@@ -13,7 +13,7 @@ from .topbar import TopBar
 from .util import (
     BulkRunScript, Pane, Events, IDGen, as_enum, jbool, js_json, TIME, NUM, FLOAT,
     LINE_STYLE, MARKER_POSITION, MARKER_SHAPE, CROSSHAIR_MODE,
-    PRICE_SCALE_MODE, marker_position, marker_shape, js_data, js_zipdata
+    PRICE_SCALE_MODE, marker_position, marker_shape, js_data, js_zipdata, js_zip
 )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -259,7 +259,8 @@ class SeriesCommon(Pane):
         self.run_script(f'{self.id}.series.update({js_data(series)})')
 
     def _update_markers(self):
-        self.run_script(f'{self.id}.seriesMarkers.setMarkers({json.dumps(list(self.markers.values()))})')
+        str_markers = json.dumps(list(self.markers.values()))
+        self.run_script(f'{self.id}.seriesMarkers.setMarkers(await decodeGzJSON("{js_zip(str_markers)}")); ')
 
     def marker_list(self, markers: list):
         """

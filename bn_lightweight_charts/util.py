@@ -92,6 +92,10 @@ def js_zipdata(data: Union[pd.DataFrame, pd.Series]):
     compressed = gzip.compress(raw)
     return base64.b64encode(compressed).decode("ascii")
 
+def js_zip(data: str):
+    raw = data.encode("utf-8")
+    compressed = gzip.compress(raw)
+    return base64.b64encode(compressed).decode("ascii")
 
 def snake_to_camel(s: str):
     components = s.split('_')
