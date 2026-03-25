@@ -205,7 +205,7 @@
         text-align: left;
     }
 
-    .tableview-dark > tbody > tr > td, .tableview-perf > tbody > tr > td {
+    .tableview-dark > tbody > tr > td, .tableview-perf > tbody > tr > td, .tableview-params > tbody > tr > td  {
         border-left: 1px solid var(--border);
     }
 
@@ -428,7 +428,8 @@
     }
 
     #trades,
-    #performance {
+    #performance,
+    #parameters {
         margin-top: 8px;
     }
 
@@ -468,49 +469,63 @@
         </div>
     </nav>
     <div id="nav-tabContent">
-                <div class="tab-pane active" id="nav-chart" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+        <div class="tab-pane active" id="nav-chart" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
             <div id="container"></div>
         </div>
-                <div class="tab-pane" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="0">
+        
+        <div class="tab-pane" id="nav-trades" role="tabpanel" aria-labelledby="nav-trades-tab" tabindex="0">
             <div class="tab-content-inner">
-                        <div class="tab-section-head">
-                            <p class="tab-section-title">Trades for [ <span id="trades-title"></span> ]</p>
-                            <p class="tab-helper">Tip: Double-click a date/time to jump to this trade on chart.</p>
-                        </div>
-            <table id="trades" class="tableview">
-                            <thead class="thead-sticky">
-                                <tr>
-                                    <th>Ref</th>
-                                    <th>Position</th>
-                                    <th>TradeId</th>
-                                    <th>Open Date</th>
-                                    <th>Open Price</th>
-                                    <th>Close Date</th>
-                                    <th>Close Price</th>
-                                    <th>Profit</th>
-                                    <th>Profit %</th>
-                                    <th>Comm</th>
-                                    <th>Bars</th>
-                                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
+                <div class="tab-section-head">
+                    <p class="tab-section-title">Trades for [ <span id="trades-title"></span> ]</p>
+                    <p class="tab-helper">Tip: Double-click a date/time to jump to this trade on chart.</p>
+                </div>
+                <table id="trades" class="tableview">
+                    <thead class="thead-sticky">
+                        <tr>
+                            <th>Ref</th>
+                            <th>Position</th>
+                            <th>TradeId</th>
+                            <th>Open Date</th>
+                            <th>Open Price</th>
+                            <th>Close Date</th>
+                            <th>Close Price</th>
+                            <th>Profit</th>
+                            <th>Profit %</th>
+                            <th>Comm</th>
+                            <th>Bars</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
             </div>
         </div>
-                <div class="tab-pane" id="nav-perf" role="tabpanel" aria-labelledby="nav-perf-tab" tabindex="0">
+
+        <div class="tab-pane" id="nav-perf" role="tabpanel" aria-labelledby="nav-perf-tab" tabindex="0">
             <div class="tab-content-inner">
-            <p class="tab-section-title">Performance Report for [ <span id="strategy-title"></span> ]</p>
-            <table id="performance" class="tableview tableview-perf">
-              <thead>
-                                <tr>
-                                    <th>Metric</th>
-                                    <th>Value</th>
-                                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
+                <p class="tab-section-title">Performance Report for [ <span id="strategy-title"></span> ]</p>
+                <div style="display: flex; gap: 100px; flex-flow: row; align-items: flex-start;">
+                    <table id="performance" class="tableview tableview-perf">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <table id="parameters" class="tableview tableview-params">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

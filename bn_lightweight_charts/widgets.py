@@ -216,6 +216,7 @@ class HTMLChart_BN(StaticLWC):
         self.trades = []
         self.performance = []
         self.strat_titles = []
+        self.strat_parameters = []
         self.filename = filename
 
     def _prepare_html(self):
@@ -227,6 +228,7 @@ class HTMLChart_BN(StaticLWC):
                 {self.js_win[i]}
                 updateTrades(id);
                 updatePerformance(id);
+                updateParams(id);
             }}
             '''
         html_code = f'''{self._html_init}
@@ -236,6 +238,7 @@ class HTMLChart_BN(StaticLWC):
         const trades = {json.dumps(self.trades)};
         const perf_metrics = {json.dumps(self.performance)};
         const strategy_titles = {json.dumps(self.strat_titles)};
+        const strat_params = {json.dumps(self.strat_parameters)};
 
         async function updateChart(id){{
             document.querySelector('#nav-home-tab')?.click();
@@ -286,6 +289,17 @@ class HTMLChart_BN(StaticLWC):
             const tbl = document.querySelector('#performance tbody');
             tbl.innerHTML = '';
             const lst = perf_metrics[id];
+            if (lst.length == 0)
+                return;
+            for (const v of lst) {{
+                tbl.innerHTML += `<tr><td>${{v.index}}</td><td style="text-align:right">${{v.value}}</td></tr>`;
+            }}
+        }}
+
+        function updateParams(id){{
+            const tbl = document.querySelector('#parameters tbody');
+            tbl.innerHTML = '';
+            const lst = strat_params[id];
             if (lst.length == 0)
                 return;
             for (const v of lst) {{
@@ -362,4 +376,9 @@ class HTMLChart_BN(StaticLWC):
         self.performance.append(v)
         self.strat_titles.append(strat_title)
 
+    def set_parameters_list(self, df:Optional[pd.Series] = None):
+        v = []
+        if df is not None and not df.empty:
+            v = series_data(df)
+        self.strat_parameters.append(v)
 
