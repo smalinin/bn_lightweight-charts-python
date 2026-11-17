@@ -272,7 +272,7 @@ class HTMLChart_BN(StaticLWC):
                         _html += `<tr><td></td><td></td><td colspan="9" class="separator">`
                                 +`<table class="tableview-dark">`
                                 +`<thead>`
-                                +`<th>Ref</th><th>Date</th><th>Type</th><th>Price</th><th>Size</th></thead>`
+                                +`<th>Ref</th><th>Date (UTC)</th><th>Type</th><th>Price</th><th>Size</th></thead>`
                                 +`<tbody>`;
                         state = 1;
                     }}

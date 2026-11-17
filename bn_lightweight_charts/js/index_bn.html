@@ -477,7 +477,7 @@
             <div class="tab-content-inner">
                 <div class="tab-section-head">
                     <p class="tab-section-title">Trades for [ <span id="trades-title"></span> ]</p>
-                    <p class="tab-helper">Tip: Double-click a date/time to jump to this trade on chart.</p>
+                    <p class="tab-helper">Times are UTC. Double-click a date/time to jump to this trade on chart.</p>
                 </div>
                 <table id="trades" class="tableview">
                     <thead class="thead-sticky">
@@ -485,10 +485,10 @@
                             <th>Ref</th>
                             <th>Position</th>
                             <th>TradeId</th>
-                            <th>Open Date</th>
-                            <th>Open Price</th>
-                            <th>Close Date</th>
-                            <th>Close Price</th>
+                            <th>Open Date (UTC)</th>
+                            <th>Avg Entry Price</th>
+                            <th>Close Date (UTC)</th>
+                            <th>Avg Exit Price</th>
                             <th>Profit</th>
                             <th>Profit %</th>
                             <th>Comm</th>
@@ -610,28 +610,34 @@
           }
         }
 
-        function scrollToTime(chart, stm0, stm1)
-        {
-          const tm0 = (new Date((stm0+":00").replace(' ','T')+'Z')).getTime()/1000
-          const tm1 = stm1 ? (new Date((stm1+":00").replace(' ','T')+'Z')).getTime()/1000 : null
+        function parseChartTime(value) {
+            if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+            if (typeof value !== 'string' || !value.trim() || value.trim() === '--') return null;
+            let iso = value.trim().replace(' ', 'T');
+            if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) iso += 'T00:00:00';
+            if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(iso)) iso += 'Z';
+            const milliseconds = Date.parse(iso);
+            return Number.isFinite(milliseconds) ? milliseconds / 1000 : null;
+        }
 
-          const scale = chart.timeScale()
-          const tc0 = scale.timeToCoordinate(tm0)
-          if (tc0) {
-            const idx0 = scale.coordinateToLogical(tc0)
-            if (tm1) {
-              const tc1 = scale.timeToCoordinate(tm1)
-              if (tc1) {
-                const idx1 = scale.coordinateToLogical(tc1)
-                scale.setVisibleLogicalRange({ from: idx0 - 5, to: idx1 + 5 });
-                document.querySelector("#nav-home-tab").click();
-              }
+        function scrollToTime(chart, stm0, stm1) {
+            const scale = chart.timeScale();
+            function logicalIndex(value) {
+                const time = parseChartTime(value);
+                if (time === null) return null;
+                const coordinate = scale.timeToCoordinate(time);
+                if (!Number.isFinite(coordinate)) return null;
+                const index = scale.coordinateToLogical(coordinate);
+                return Number.isFinite(index) ? index : null;
             }
-            else {
-                scale.setVisibleLogicalRange({ from: idx0 - 5, to: idx0 + 200 + 5 });
-                document.querySelector("#nav-home-tab").click();
-            }
-          }
+            const start = logicalIndex(stm0);
+            const end = logicalIndex(stm1);
+            if (start === null && end === null) return;
+            const first = start === null ? end : start;
+            const last = end === null ? first + 200 : end;
+            scale.setVisibleLogicalRange({from: Math.min(first, last) - 5,
+                                         to: Math.max(first, last) + 5});
+            document.querySelector('#nav-home-tab')?.click();
         }
 
         function parseLocaleNumber(text) {
